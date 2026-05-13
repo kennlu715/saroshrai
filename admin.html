@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI工具地图 - 管理后台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0066FF;
+      --primary-dark: #0052CC;
+      --danger: #EF4444;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --bg-dark: #0A0E1A;
+      --bg-card: #111827;
+      --bg-card-hover: #1F2937;
+      --text-primary: #FFFFFF;
+      --text-secondary: #9CA3AF;
+      --text-muted: #6B7280;
+      --border: #1F2937;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    
+    /* Login Screen */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+    }
+    
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .login-logo .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    .login-logo h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .login-logo p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .form-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .form-input {
+      padding: 14px 16px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+    }
+    
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .btn {
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .login-hint {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--warning);
+    }
+    
+    .login-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .login-error.show {
+      display: block;
+    }
+    
+    /* Dashboard */
+    .dashboard {
+      display: none;
+    }
+    
+    .dashboard.active {
+      display: block;
+    }
+    
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(10, 14, 26, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .back-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    
+    .back-link:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .user-details {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .user-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .user-role {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .btn-logout {
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-logout:hover {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: white;
+    }
+    
+    .main {
+      padding-top: 80px;
+      padding-bottom: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+    
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .page-desc {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+    
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .btn {
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+    
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+    
+    .section-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .section-item {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .section-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .section-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .section-icon {
+      font-size: 28px;
+    }
+    
+    .section-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .section-count {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    .tool-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .tool-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    
+    .tool-item:hover {
+      border-color: var(--primary);
+    }
+    
+    .tool-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .tool-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .tool-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .tool-url {
+      font-size: 12px;
+      color: var(--primary);
+    }
+    
+    .tool-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    
+    .add-section-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .form-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .form-select {
+      padding: 10px 14px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    
+    .form-actions {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    
+    /* Admin List */
+    .admin-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .admin-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    
+    .admin-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .admin-avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    
+    .admin-details {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .admin-name {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .admin-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .role-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .role-badge.super_admin {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .role-badge.admin {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      padding: 24px;
+    }
+    
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.95);
+      transition: transform 0.3s;
+    }
+    
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--bg-dark);
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    
+    .modal-close:hover {
+      background: var(--border);
+    }
+    
+    .modal-body {
+      padding: 20px;
+    }
+    
+    .modal-body .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .modal-body .form-input,
+    .modal-body .form-textarea {
+      width: 100%;
+    }
+    
+    .form-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 14px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      transition: transform 0.3s;
+      z-index: 1001;
+    }
+    
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    
+    .toast.success {
+      border-color: var(--success);
+    }
+    
+    .toast.error {
+      border-color: var(--danger);
+    }
+    
+    .toast.warning {
+      border-color: var(--warning);
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    
+    /* Experience list */
+    .exp-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .exp-item {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    
+    .exp-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    
+    .exp-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    
+    .exp-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .exp-content {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    /* Tab navigation */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .tab:hover {
+      border-color: var(--primary);
+      color: var(--text-primary);
+    }
+    
+    .tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    /* Collapsible */
+    .collapse-header {
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .collapse-arrow {
+      transition: transform 0.2s;
+    }
+    
+    .collapse-header.collapsed .collapse-arrow {
+      transform: rotate(-90deg);
+    }
+    
+    .tool-list {
+      display: block;
+    }
+    
+    .collapse-header.collapsed + .tool-list,
+    .section-item .tool-list {
+      display: none;
+    }
+    
+    .section-item.expanded .tool-list {
+      display: flex;
+    }
+    
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 12px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="icon">🛠️</div>
+        <h1>AI 工具地图</h1>
+        <p>管理后台</p>
+      </div>
+      
+      <form class="login-form" id="loginForm">
+        <div id="loginError" class="login-error"></div>
+        
+        <div class="form-group">
+          <label class="form-label">企业邮箱</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="name@corp.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">组织架构（可选）</label>
+          <input type="text" class="form-input" id="loginOrg" placeholder="如: IEG/技术工程部">
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="loginBtn">
+          <span>登录</span>
+        </button>
+      </form>
+      
+      <div class="login-hint">
+        💡 提示：如无法登录，请联系超级管理员添加您的账号到白名单
+      </div>
+    </div>
+  </div>
+  
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <span>⚙️</span>
+          <span>管理后台</span>
+        </div>
+        <a href="/index.html" class="back-link" target="_blank">← 返回前台</a>
+      </div>
+      <div class="header-right">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details">
+            <span class="user-name" id="userName">管理员</span>
+            <span class="user-role" id="userRole">管理员</span>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="logout()">退出登录</button>
+      </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main">
+      <h1 class="page-title">AI 工具地图管理后台</h1>
+      <p class="page-desc">管理工具集锦和经验分享内容</p>
+      
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="tools">🛠️ 工具管理</button>
+        <button class="tab" data-tab="experiences">💡 经验分享</button>
+        <button class="tab" data-tab="stars">🏆 AI达人</button>
+        <button class="tab" data-tab="admins" id="tabAdmins" style="display: none;">👥 管理员管理</button>
+      </div>
+      
+      <!-- Tools Tab -->
+      <div id="tab-tools" class="tab-content">
+        <!-- Add Section -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📦 添加新版块</h3>
+          </div>
+          <form id="addSectionForm" class="add-section-form">
+            <div class="form-group">
+              <label class="form-label">板块ID</label>
+              <input type="text" class="form-input" name="id" placeholder="如: coding" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">板块名称</label>
+              <input type="text" class="form-input" name="name" placeholder="如: 编程开发" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">英文名称</label>
+              <input type="text" class="form-input" name="nameEn" placeholder="如: CODING & BUILD">
+            </div>
+            <div class="form-group">
+              <label class="form-label">颜色</label>
+              <select class="form-select" name="color">
+                <option value="blue">蓝色</option>
+                <option value="purple">紫色</option>
+                <option value="green">绿色</option>
+                <option value="orange">橙色</option>
+                <option value="red">红色</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">图标</label>
+              <input type="text" class="form-input" name="icon" placeholder="如: 💻">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">添加板块</button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Sections List -->
+        <div id="sectionsList" class="section-list">
+          <div class="loading">
+            <div class="spinner"></div>
+            加载中...
+          </div>
+        </div>
+      </div>
+      
+      <!-- Experiences Tab -->
+      <div id="tab-experiences" class="tab-content" style="display: none;">
+        <!-- Add Experience Form -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">💡 发布经验分享</h3>
+          </div>
+          <form id="addExperienceForm">
+            <div class="form-group">
+              <label class="form-label">分享人</label>
+              <input type="text" class="form-input" id="expAuthor" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">标题 *</label>
+              <input type="text" class="form-input" id="expTitle" placeholder="如: CodeBuddy 提效心得" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">内容 *</label>
+              <textarea class="form-textarea" id="expContent" placeholder="分享使用 AI 工具的心得、技巧或踩坑经历..." required></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">发布</button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Experiences List -->
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h3 class="card-title">经验分享列表</h3>
+          </div>
+          <div id="expList" class="exp-list">
+            <div class="empty-state">加载中...</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- AI Stars Tab -->
+      <div id="tab-stars" class="tab-content" style="display: none;">
+        <!-- Add Star Form -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🏆 添加AI达人</h3>
+          </div>
+          <form id="addStarForm">
+            <div class="form-group">
+              <label class="form-label">姓名 *</label>
+              <input type="text" class="form-input" id="starName" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">称号</label>
+              <input type="text" class="form-input" id="starTitle" placeholder="如: AI工具探索先锋">
+            </div>
+            <div class="form-group">
+              <label class="form-label">头像URL</label>
+              <input type="url" class="form-input" id="starAvatarUrl" placeholder="https://">
+            </div>
+            <div class="form-group">
+              <label class="form-label">优秀事迹描述 *</label>
+              <textarea class="form-textarea" id="starDescription" placeholder="描述该达人的优秀事迹..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">荣誉标签（逗号分隔）</label>
+              <input type="text" class="form-input" id="starBadges" placeholder="如: 工具达人, 分享之星">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">添加达人</button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Stars List -->
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h3 class="card-title">AI达人列表</h3>
+          </div>
+          <div id="starList" class="stars-list">
+            <div class="empty-state">加载中...</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Admins Tab -->
+      <div id="tab-admins" class="tab-content" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">管理员列表</h3>
+            <button class="btn btn-primary" onclick="openAddAdminModal()">+ 添加管理员</button>
+          </div>
+          <div id="adminList" class="admin-list">
+            <div class="empty-state">加载中...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Add/Edit Tool Modal -->
+  <div class="modal-overlay" id="toolModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="toolModalTitle">添加工具</h3>
+        <button class="modal-close" onclick="closeToolModal()">×</button>
+      </div>
+      <form id="toolForm">
+        <div class="modal-body">
+          <input type="hidden" id="toolId">
+          <input type="hidden" id="toolSectionId">
+          <div class="form-group">
+            <label class="form-label">工具名称 *</label>
+            <input type="text" class="form-input" id="toolName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">描述</label>
+            <textarea class="form-input form-textarea" id="toolDesc"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">网址</label>
+            <input type="url" class="form-input" id="toolUrl" placeholder="https://">
+          </div>
+          <div class="form-group">
+            <label class="form-label">标签（逗号分隔）</label>
+            <input type="text" class="form-input" id="toolTags" placeholder="AI, 编程, 代码助手">
+          </div>
+          <div class="form-group">
+            <label class="form-label">资源链接</label>
+            <input type="text" class="form-input" id="toolResources" placeholder="文档, 教程">
+          </div>
+          <div class="form-group">
+            <label class="form-label">案例</label>
+            <input type="text" class="form-input" id="toolCases" placeholder="案例1, 案例2">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" onclick="closeToolModal()">取消</button>
+          <button type="submit" class="btn btn-success">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Add Admin Modal -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="adminModalTitle">添加管理员</h3>
+        <button class="modal-close" onclick="closeAdminModal()">×</button>
+      </div>
+      <form id="adminForm">
+        <div class="modal-body">
+          <input type="hidden" id="adminId">
+          <div class="form-group">
+            <label class="form-label">姓名 *</label>
+            <input type="text" class="form-input" id="adminName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">企业邮箱 *</label>
+            <input type="email" class="form-input" id="adminEmail" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">组织架构</label>
+            <input type="text" class="form-input" id="adminOrg" placeholder="如: IEG/技术工程部">
+          </div>
+          <div class="form-group">
+            <label class="form-label">角色</label>
+            <select class="form-input form-select" id="adminRole">
+              <option value="admin">普通管理员</option>
+              <option value="super_admin">超级管理员</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" onclick="closeAdminModal()">取消</button>
+          <button type="submit" class="btn btn-success">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+  
+  <script>
+    const API = '/api';
+    let token = localStorage.getItem('adminToken');
+    let currentUser = null;
+    let allData = { sections: [], experiences: [], stars: [] };
+    let editingTool = null;
+    
+    // Check login status
+    async function checkLogin() {
+      if (!token) {
+        showLoginScreen();
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API}/admin/me`, {
+          headers: { 'x-session-token': token }
+        });
+        const data = await res.json();
+        
+        if (data.loggedIn) {
+          currentUser = data.admin;
+          showDashboard();
+        } else {
+          token = null;
+          localStorage.removeItem('adminToken');
+          showLoginScreen();
+        }
+      } catch (e) {
+        showLoginScreen();
+      }
+    }
+    
+    function showLoginScreen() {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('dashboard').classList.remove('active');
+    }
+    
+    function showDashboard() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').classList.add('active');
+      
+      // Update user info
+      document.getElementById('userName').textContent = currentUser.name || currentUser.email.split('@')[0];
+      document.getElementById('userRole').textContent = currentUser.role === 'super_admin' ? '超级管理员' : '管理员';
+      document.getElementById('userAvatar').textContent = (currentUser.name || currentUser.email)[0].toUpperCase();
+      
+      // Auto-fill author field with current admin name
+      document.getElementById('expAuthor').value = currentUser.name || currentUser.email.split('@')[0];
+      
+      // Show admin tab for super_admin
+      if (currentUser.role === 'super_admin') {
+        document.getElementById('tabAdmins').style.display = 'block';
+        loadAdminList();
+      }
+      
+      loadData();
+    }
+    
+    // Login
+    document.getElementById('loginForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span>登录中...</span>';
+      
+      const email = document.getElementById('loginEmail').value;
+      const org = document.getElementById('loginOrg').value;
+      const errorEl = document.getElementById('loginError');
+      errorEl.classList.remove('show');
+      
+      try {
+        const res = await fetch(`${API}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, org })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+          token = data.token;
+          currentUser = data.admin;
+          localStorage.setItem('adminToken', token);
+          showDashboard();
+        } else {
+          errorEl.textContent = data.error || '登录失败';
+          errorEl.classList.add('show');
+          btn.disabled = false;
+          btn.innerHTML = '<span>登录</span>';
+        }
+      } catch (e) {
+        errorEl.textContent = '网络错误，请重试';
+        errorEl.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = '<span>登录</span>';
+      }
+    };
+    
+    // Logout
+    async function logout() {
+      if (token) {
+        await fetch(`${API}/admin/logout`, {
+          method: 'POST',
+          headers: { 'x-session-token': token }
+        });
+      }
+      token = null;
+      currentUser = null;
+      localStorage.removeItem('adminToken');
+      showLoginScreen();
+    }
+    
+    // Load data
+    async function loadData() {
+      const res = await fetch(`${API}/data`);
+      allData = await res.json();
+      renderSections();
+      renderExperiences();
+    }
+    
+    // Render sections
+    function renderSections() {
+      const list = document.getElementById('sectionsList');
+      if (allData.sections.length === 0) {
+        list.innerHTML = '<div class="empty-state">暂无板块，点击上方添加</div>';
+        return;
+      }
+      
+      list.innerHTML = allData.sections.map(section => `
+        <div class="section-item expanded">
+          <div class="section-item-header collapse-header" onclick="toggleCollapse(this.parentElement)">
+            <div class="section-info">
+              <span class="section-icon">${section.icon || '📦'}</span>
+              <div>
+                <div class="section-name">${section.name}</div>
+                <div class="section-count">${section.tools?.length || 0} 个工具</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openAddToolModal('${section.id}')">+ 添加工具</button>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteSection('${section.id}')">删除板块</button>
+              <svg class="collapse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </div>
+          </div>
+          <div class="tool-list">
+            ${(section.tools || []).map(tool => `
+              <div class="tool-item">
+                <div class="tool-info">
+                  <div class="tool-name">${tool.name}</div>
+                  <div class="tool-desc">${tool.description || '-'}</div>
+                  <div class="tool-url">${tool.url || '-'}</div>
+                </div>
+                <div class="tool-actions">
+                  <button class="btn btn-primary btn-sm" onclick="editTool('${section.id}', '${tool.id}')">编辑</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteTool('${section.id}', '${tool.id}')">删除</button>
+                </div>
+              </div>
+            `).join('')}
+            ${(section.tools || []).length === 0 ? '<div class="empty-state">该板块暂无工具</div>' : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // Toggle collapse
+    function toggleCollapse(item) {
+      const header = item.querySelector('.collapse-header');
+      header.classList.toggle('collapsed');
+      item.classList.toggle('expanded');
+    }
+    
+    // Render experiences
+    function renderExperiences() {
+      const list = document.getElementById('expList');
+      if (allData.experiences.length === 0) {
+        list.innerHTML = '<div class="empty-state">暂无经验分享</div>';
+        return;
+      }
+      
+      list.innerHTML = allData.experiences.map(exp => `
+        <div class="exp-item">
+          <div class="exp-header">
+            <div class="exp-title">${exp.title}</div>
+            <div class="exp-meta">${exp.author || '匿名'} · ${exp.date}</div>
+          </div>
+          <div class="exp-content">${exp.content}</div>
+          <div style="margin-top: 12px;">
+            <button class="btn btn-danger btn-sm" onclick="deleteExperience('${exp.id}')">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // Load admin list
+    async function loadAdminList() {
+      try {
+        const res = await fetch(`${API}/admin/list`, {
+          headers: { 'x-session-token': token }
+        });
+        const admins = await res.json();
+        
+        const list = document.getElementById('adminList');
+        list.innerHTML = admins.map(admin => `
+          <div class="admin-item">
+            <div class="admin-info">
+              <div class="admin-avatar">${(admin.name || admin.email || 'A')[0].toUpperCase()}</div>
+              <div class="admin-details">
+                <div class="admin-name">${admin.name || admin.email}</div>
+                <div class="admin-meta">${admin.email} · ${admin.org || '未设置组织'}</div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span class="role-badge ${admin.role}">${admin.role === 'super_admin' ? '超级管理员' : '管理员'}</span>
+              ${admin.id !== currentUser.id ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${admin.id}')">删除</button>` : '<span style="font-size: 12px; color: var(--text-muted);">当前用户</span>'}
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error('Failed to load admin list');
+      }
+    }
+    
+    // Add section
+    document.getElementById('addSectionForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const newSection = {
+        id: form.id.value,
+        name: form.name.value,
+        nameEn: form.nameEn.value || form.name.value,
+        color: form.color.value,
+        icon: form.icon.value || '📦',
+        tools: []
+      };
+      
+      const res = await fetch(`${API}/sections`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-session-token': token
+        },
+        body: JSON.stringify(newSection)
+      });
+      
+      if (res.ok) {
+        showToast('板块添加成功');
+        loadData();
+        form.reset();
+      } else {
+        const data = await res.json();
+        showToast(data.error || '添加失败', 'error');
+      }
+    };
+    
+    // Delete section
+    async function deleteSection(sectionId) {
+      if (!confirm('确定要删除整个板块吗？')) return;
+      
+      const res = await fetch(`${API}/sections/${sectionId}`, { 
+        method: 'DELETE',
+        headers: { 'x-session-token': token }
+      });
+      if (res.ok) {
+        showToast('删除成功');
+        loadData();
+      } else {
+        const data = await res.json();
+        showToast(data.error || '删除失败', 'error');
+      }
+    }
+    
+    // Tool Modal
+    function openAddToolModal(sectionId) {
+      editingTool = null;
+      document.getElementById('toolModalTitle').textContent = '添加工具';
+      document.getElementById('toolForm').reset();
+      document.getElementById('toolId').value = '';
+      document.getElementById('toolSectionId').value = sectionId;
+      document.getElementById('toolModal').classList.add('active');
+    }
+    
+    function editTool(sectionId, toolId) {
+      const section = allData.sections.find(s => s.id === sectionId);
+      const tool = section?.tools?.find(t => t.id === toolId);
+      if (!tool) return;
+      
+      editingTool = { sectionId, toolId };
+      document.getElementById('toolModalTitle').textContent = '编辑工具';
+      document.getElementById('toolId').value = tool.id;
+      document.getElementById('toolSectionId').value = sectionId;
+      document.getElementById('toolName').value = tool.name;
+      document.getElementById('toolDesc').value = tool.description || '';
+      document.getElementById('toolUrl').value = tool.url || '';
+      document.getElementById('toolTags').value = (tool.tags || []).join(', ');
+      document.getElementById('toolResources').value = (tool.resources || []).join(', ');
+      document.getElementById('toolCases').value = (tool.cases || []).join(', ');
+      document.getElementById('toolModal').classList.add('active');
+    }
+    
+    function closeToolModal() {
+      document.getElementById('toolModal').classList.remove('active');
+    }
+    
+    document.getElementById('toolForm').onsubmit = async (e) => {
+      e.preventDefault();
+      
+      const sectionId = document.getElementById('toolSectionId').value;
+      const toolId = document.getElementById('toolId').value || 'tool' + Date.now();
+      
+      const tool = {
+        id: toolId,
+        name: document.getElementById('toolName').value,
+        description: document.getElementById('toolDesc').value,
+        url: document.getElementById('toolUrl').value,
+        tags: document.getElementById('toolTags').value.split(',').map(t => t.trim()).filter(Boolean),
+        resources: document.getElementById('toolResources').value.split(',').map(t => t.trim()).filter(Boolean),
+        cases: document.getElementById('toolCases').value.split(',').map(t => t.trim()).filter(Boolean)
+      };
+      
+      const url = editingTool 
+        ? `${API}/sections/${sectionId}/tools/${editingTool.toolId}`
+        : `${API}/sections/${sectionId}/tools`;
+      
+      const res = await fetch(url, {
+        method: editingTool ? 'PUT' : 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-session-token': token
+        },
+        body: JSON.stringify(tool)
+      });
+      
+      if (res.ok) {
+        showToast(editingTool ? '更新成功' : '添加成功');
+        closeToolModal();
+        loadData();
+      } else {
+        const data = await res.json();
+        showToast(data.error || '操作失败', 'error');
+      }
+    };
+    
+    // Delete tool
+    async function deleteTool(sectionId, toolId) {
+      if (!confirm('确定要删除这个工具吗？')) return;
+      
+      const res = await fetch(`${API}/sections/${sectionId}/tools/${toolId}`, { 
+        method: 'DELETE',
+        headers: { 'x-session-token': token }
+      });
+      if (res.ok) {
+        showToast('删除成功');
+        loadData();
+      } else {
+        const data = await res.json();
+        showToast(data.error || '删除失败', 'error');
+      }
+    }
+    
+    // Delete experience
+    async function deleteExperience(expId) {
+      if (!confirm('确定要删除这条经验分享吗？')) return;
+      
+      const res = await fetch(`${API}/experiences/${expId}`, { 
+        method: 'DELETE',
+        headers: { 'x-session-token': token }
+      });
+      if (res.ok) {
+        showToast('删除成功');
+        loadData();
+      } else {
+        const data = await res.json();
+        showToast(data.error || '删除失败', 'error');
+      }
+    }
+    
+    // Admin Modal
+    function openAddAdminModal() {
+      document.getElementById('adminForm').reset();
+      document.getElementById('adminId').value = '';
+      document.getElementById('adminModalTitle').textContent = '添加管理员';
+      document.getElementById('adminModal').classList.add('active');
+    }
+    
+    function closeAdminModal() {
+      document.getElementById('adminModal').classList.remove('active');
+    }
+    
+    document.getElementById('adminForm').onsubmit = async (e) => {
+      e.preventDefault();
+      
+      const admin = {
+        name: document.getElementById('adminName').value,
+        email: document.getElementById('adminEmail').value,
+        org: document.getElementById('adminOrg').value,
+        role: document.getElementById('adminRole').value
+      };
+      
+      const res = await fetch(`${API}/admin`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-session-token': token
+        },
+        body: JSON.stringify(admin)
+      });
+      
+      if (res.ok) {
+        showToast('管理员添加成功');
+        closeAdminModal();
+        loadAdminList();
+      } else {
+        const data = await res.json();
+        showToast(data.error || '添加失败', 'error');
+      }
+    };
+    
+    // Add Experience Form
+    document.getElementById('addExperienceForm').onsubmit = async (e) => {
+      e.preventDefault();
+      
+      const experience = {
+        title: document.getElementById('expTitle').value,
+        author: document.getElementById('expAuthor').value,
+        content: document.getElementById('expContent').value,
+        date: new Date().toISOString().split('T')[0]
+      };
+      
+      const res = await fetch(`${API}/experiences`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-session-token': token
+        },
+        body: JSON.stringify(experience)
+      });
+      
+      if (res.ok) {
+        showToast('经验分享发布成功');
+        document.getElementById('addExperienceForm').reset();
+        document.getElementById('expAuthor').value = currentUser.name || currentUser.email.split('@')[0];
+        loadData();
+      } else {
+        const data = await res.json();
+        showToast(data.error || '发布失败', 'error');
+      }
+    };
+    
+    async function deleteAdmin(adminId) {
+      if (!confirm('确定要删除这个管理员吗？')) return;
+      
+      const res = await fetch(`${API}/admin/${adminId}`, { 
+        method: 'DELETE',
+        headers: { 'x-session-token': token }
+      });
+      if (res.ok) {
+        showToast('删除成功');
+        loadAdminList();
+      } else {
+        const data = await res.json();
+        showToast(data.error || '删除失败', 'error');
+      }
+    }
+    
+    // Tab switch
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
+        
+        if (tab.dataset.tab === 'admins') {
+          loadAdminList();
+        }
+      });
+    });
+    
+    // Toast
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `toast show ${type}`;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    // Init
+    checkLogin();
+  </script>
+</body>
+</html>

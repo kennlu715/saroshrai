@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>萨罗斯-鹅厂AI工具与探索地图</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0066FF;
+      --primary-dark: #0052CC;
+      --secondary: #00D4AA;
+      --bg-dark: #0A0E1A;
+      --bg-card: #111827;
+      --bg-card-hover: #1F2937;
+      --text-primary: #FFFFFF;
+      --text-secondary: #9CA3AF;
+      --text-muted: #6B7280;
+      --border: #1F2937;
+      --blue: #3B82F6;
+      --purple: #8B5CF6;
+      --green: #10B981;
+      --orange: #F59E0B;
+      --red: #EF4444;
+      --pink: #EC4899;
+      --cyan: #06B6D4;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(10, 14, 26, 0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .nav-link:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    
+    .nav-link.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .admin-btn {
+      padding: 8px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    
+    .admin-btn:hover {
+      border-color: var(--primary);
+      background: rgba(0, 102, 255, 0.1);
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 140px 24px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 102, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(0, 102, 255, 0.1);
+      border: 1px solid rgba(0, 102, 255, 0.3);
+      border-radius: 100px;
+      font-size: 14px;
+      color: var(--primary);
+      margin-bottom: 24px;
+    }
+    
+    .hero-badge .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--secondary);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .hero h1 {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff 0%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .hero p {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+    
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    
+    /* Search */
+    .search-section {
+      max-width: 700px;
+      margin: -40px auto 60px;
+      padding: 0 24px;
+      position: relative;
+      z-index: 10;
+    }
+    
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      transition: all 0.3s;
+    }
+    
+    .search-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1);
+    }
+    
+    .search-box input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 16px;
+    }
+    
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .search-box svg {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    
+    /* Section */
+    .section {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    
+    .section-header {
+      margin-bottom: 32px;
+    }
+    
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .section-desc {
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
+    
+    /* Category Tabs */
+    .category-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    
+    .category-tab {
+      padding: 10px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .category-tab:hover {
+      border-color: var(--primary);
+      color: var(--text-primary);
+    }
+    
+    .category-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    /* Tool Grid */
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+    
+    .tool-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .tool-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .tool-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .tool-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    
+    .tool-icon.blue { background: rgba(59, 130, 246, 0.15); }
+    .tool-icon.purple { background: rgba(139, 92, 246, 0.15); }
+    .tool-icon.green { background: rgba(16, 185, 129, 0.15); }
+    .tool-icon.orange { background: rgba(245, 158, 11, 0.15); }
+    .tool-icon.red { background: rgba(239, 68, 68, 0.15); }
+    .tool-icon.pink { background: rgba(236, 72, 153, 0.15); }
+    .tool-icon.cyan { background: rgba(6, 182, 212, 0.15); }
+    
+    .tool-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .tool-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .tool-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    .tool-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .tool-tag {
+      padding: 4px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .tool-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .tool-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    
+    .tool-link:hover {
+      gap: 10px;
+    }
+    
+    .tool-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .tool-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    /* Experience Section */
+    .experience-section {
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 102, 255, 0.05) 100%);
+    }
+    
+    .experience-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 24px;
+    }
+    
+    .experience-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.3s;
+    }
+    
+    .experience-card:hover {
+      border-color: var(--primary);
+    }
+    
+    .experience-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .experience-title {
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    
+    .experience-date {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    
+    .experience-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .author-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .author-name {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .experience-content {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    
+    /* Tab Navigation */
+    .tab-content {
+      display: none;
+      padding: 40px 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .nav-links button.nav-link {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .nav-links button.nav-link:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+    
+    .nav-links button.nav-link.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    /* AI Stars Section */
+    .stars-section {
+      background: linear-gradient(180deg, transparent 0%, rgba(245, 158, 11, 0.05) 100%);
+    }
+    
+    .stars-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    
+    .star-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .star-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--orange), var(--pink), var(--purple));
+    }
+    
+    .star-card:hover {
+      border-color: var(--orange);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(245, 158, 11, 0.15);
+    }
+    
+    .star-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      border: 3px solid var(--orange);
+      overflow: hidden;
+      background: var(--bg-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    
+    .star-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .star-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .star-title {
+      font-size: 14px;
+      color: var(--orange);
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    
+    .star-description {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      text-align: left;
+    }
+    
+    .star-badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .star-badge {
+      padding: 4px 12px;
+      background: rgba(245, 158, 11, 0.15);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--orange);
+    }
+    
+    .star-date {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+    
+    /* Share Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      padding: 24px;
+    }
+    
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.95);
+      transition: transform 0.3s;
+    }
+    
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--bg-dark);
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .modal-close:hover {
+      background: var(--border);
+      color: var(--text-primary);
+    }
+    
+    .modal-body {
+      padding: 24px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    /* Attachment Area */
+    .attachment-area {
+      background: var(--bg-dark);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    
+    .attachment-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .attachment-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .attachment-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    
+    .attachment-content {
+      display: none;
+    }
+    
+    .attachment-content.active {
+      display: block;
+    }
+    
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .upload-zone:hover {
+      border-color: var(--primary);
+      background: rgba(0, 102, 255, 0.05);
+    }
+    
+    .upload-zone.dragover {
+      border-color: var(--primary);
+      background: rgba(0, 102, 255, 0.1);
+    }
+    
+    .upload-zone svg {
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    
+    .upload-zone p {
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    
+    .upload-zone span {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    
+    .uploaded-files {
+      margin-top: 12px;
+    }
+    
+    .uploaded-file {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .uploaded-file-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .uploaded-file-info svg {
+      color: var(--primary);
+    }
+    
+    .uploaded-file-name {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    .uploaded-file-size {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .uploaded-file-remove {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+    }
+    
+    .uploaded-file-remove:hover {
+      color: var(--danger);
+    }
+    
+    /* Experience Card Attachments */
+    .exp-attachments {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .exp-attachments-title {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    
+    .exp-attachment-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(0, 102, 255, 0.1);
+      border-radius: 6px;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    
+    .exp-attachment-link:hover {
+      background: rgba(0, 102, 255, 0.2);
+    }
+    
+    .exp-attachment-file {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border-radius: 6px;
+      color: var(--success);
+      text-decoration: none;
+      font-size: 13px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+    
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+    
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    .form-btn {
+      width: 100%;
+      padding: 14px 24px;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .form-btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    .form-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Share Button */
+    .share-btn {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(0, 102, 255, 0.4);
+      transition: all 0.3s;
+      z-index: 50;
+    }
+    
+    .share-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 40px rgba(0, 102, 255, 0.5);
+    }
+    
+    .share-btn svg {
+      width: 28px;
+      height: 28px;
+      color: white;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 40px 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-muted);
+    }
+    
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 14px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s;
+      z-index: 1001;
+    }
+    
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    
+    .toast.success {
+      border-color: var(--green);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 36px;
+      }
+      
+      .hero-stats {
+        gap: 24px;
+      }
+      
+      .stat-value {
+        font-size: 28px;
+      }
+      
+      .tool-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .experience-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .nav-links {
+        display: none;
+      }
+    }
+    
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+    }
+    
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+    }
+    
+    .tooltip:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    /* Live indicator */
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--secondary);
+    }
+    
+    .live-indicator .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--secondary);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">🚀</div>
+        <span>萨罗斯-鹅厂AI工具与探索地图</span>
+      </div>
+      <nav class="nav-links">
+        <button class="nav-link active" data-tab="tools" onclick="switchTab('tools')">工具集锦</button>
+        <button class="nav-link" data-tab="experience" onclick="switchTab('experience')">经验分享</button>
+        <button class="nav-link" data-tab="stars" onclick="switchTab('stars')">AI达人</button>
+      </nav>
+      <a href="/admin.html" class="admin-btn" target="_blank">
+        <span>⚙️</span> 管理后台
+      </a>
+    </div>
+  </header>
+  
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      <span class="live-indicator"><span class="dot"></span> 实时更新</span>
+    </div>
+    <h1>萨罗斯-鹅厂AI工具与探索地图</h1>
+    <p>汇聚鹅厂优质 AI 工具，收录使用心得，让你的工作效率倍增</p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-value" id="totalTools">0</div>
+        <div class="stat-label">精选工具</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="totalCategories">0</div>
+        <div class="stat-label">分类板块</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="totalExperiences">0</div>
+        <div class="stat-label">经验分享</div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Search -->
+  <div class="search-section">
+    <div class="search-box">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="searchInput" placeholder="搜索工具名称、功能或标签...">
+    </div>
+  </div>
+  
+  <!-- Tab Content: Tools -->
+  <section class="tab-content active" id="tab-tools">
+    <div class="section-header">
+      <h2 class="section-title">🛠️ 工具集锦</h2>
+      <p class="section-desc">精选鹅厂 AI 工具，覆盖编程、设计、写作等场景</p>
+    </div>
+    
+    <div class="category-tabs" id="categoryTabs">
+      <button class="category-tab active" data-category="all">
+        <span>全部</span>
+      </button>
+    </div>
+    
+    <div class="tool-grid" id="toolGrid">
+      <!-- Tools will be loaded here -->
+    </div>
+  </section>
+  
+  <!-- Tab Content: Experience -->
+  <section class="tab-content" id="tab-experience">
+    <div class="section-header">
+      <h2 class="section-title">💡 经验分享</h2>
+      <p class="section-desc">来自鹅厂同学的实战心得与使用技巧</p>
+    </div>
+    
+    <div class="experience-grid" id="experienceGrid">
+      <!-- Experiences will be loaded here -->
+    </div>
+  </section>
+
+  <!-- Tab Content: AI Stars -->
+  <section class="tab-content" id="tab-stars">
+    <div class="section-header">
+      <h2 class="section-title">🏆 AI达人表彰</h2>
+      <p class="section-desc">表彰在 AI 工具探索与应用中表现突出的鹅厂同学</p>
+    </div>
+    
+    <div class="stars-grid" id="starsGrid">
+      <!-- Stars will be loaded here -->
+    </div>
+  </section>
+  
+  <!-- Share Button -->
+  <button class="share-btn" id="shareBtn" title="分享经验">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </button>
+  
+  <!-- Share Modal -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">✨ 分享你的经验</h3>
+        <button class="modal-close" id="closeModal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="shareForm">
+          <div class="form-group">
+            <label class="form-label">标题 *</label>
+            <input type="text" class="form-input" id="expTitle" placeholder="给你的分享起个标题" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">你的名字</label>
+            <input type="text" class="form-input" id="expAuthor" placeholder="方便大家认识你">
+          </div>
+          <div class="form-group">
+            <label class="form-label">经验内容 *</label>
+            <textarea class="form-textarea" id="expContent" placeholder="分享你使用 AI 工具的心得、技巧或踩坑经历..." required></textarea>
+          </div>
+          
+          <!-- 附件支持 -->
+          <div class="form-group">
+            <label class="form-label">附件上传</label>
+            <div class="attachment-area" id="attachmentArea">
+              <div class="attachment-tabs">
+                <button type="button" class="attachment-tab active" data-type="link" onclick="switchAttachmentTab('link')">📎 在线文档链接</button>
+                <button type="button" class="attachment-tab" data-type="upload" onclick="switchAttachmentTab('upload')">📁 上传文件</button>
+              </div>
+              
+              <!-- 链接输入 -->
+              <div class="attachment-content active" id="attachLink">
+                <input type="url" class="form-input" id="expLink" placeholder="粘贴腾讯文档、企业微信文档等在线链接">
+                <select class="form-input" id="expLinkType" style="margin-top: 8px;">
+                  <option value="">选择文档类型（可选）</option>
+                  <option value="腾讯文档">腾讯文档</option>
+                  <option value="企业微信文档">企业微信文档</option>
+                  <option value="在线文档">其他在线文档</option>
+                </select>
+              </div>
+              
+              <!-- 文件上传 -->
+              <div class="attachment-content" id="attachUpload">
+                <div class="upload-zone" id="uploadZone">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                  </svg>
+                  <p>点击或拖拽文件到此处上传</p>
+                  <span>支持 Word(.docx)、PDF 格式，单个文件不超过 10MB</span>
+                  <input type="file" id="expFile" accept=".docx,.doc,.pdf" style="display: none;">
+                </div>
+              </div>
+            </div>
+            <div id="uploadedFiles" class="uploaded-files"></div>
+          </div>
+          
+          <button type="submit" class="form-btn" id="submitBtn">发布分享</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <p>萨罗斯-鹅厂AI工具与探索地图 · 数据实时更新 · <a href="/admin.html" target="_blank">管理后台</a></p>
+    <p style="margin-top: 8px;">Last updated: <span id="lastUpdate">-</span></p>
+  </footer>
+  
+  <script>
+    // API Base
+    const API_BASE = '/api';
+    
+    // State
+    let allData = { sections: [], experiences: [], stars: [] };
+    let currentCategory = 'all';
+    let searchQuery = '';
+    
+    // Color map
+    const colorMap = {
+      blue: 'blue', purple: 'purple', green: 'green', 
+      orange: 'orange', red: 'red', pink: 'pink', cyan: 'cyan'
+    };
+    
+    // Load data
+    async function loadData() {
+      try {
+        const res = await fetch(`${API_BASE}/data`);
+        allData = await res.json();
+        renderAll();
+      } catch (e) {
+        showToast('加载数据失败，请刷新重试', 'error');
+      }
+    }
+    
+    // Render all
+    function renderAll() {
+      renderStats();
+      renderCategories();
+      renderTools();
+      renderExperiences();
+      renderStars();
+      document.getElementById('lastUpdate').textContent = new Date(allData.lastUpdate).toLocaleString('zh-CN');
+    }
+    
+    // Render stats
+    function renderStats() {
+      const totalTools = allData.sections.reduce((sum, s) => sum + s.tools.length, 0);
+      document.getElementById('totalTools').textContent = totalTools;
+      document.getElementById('totalCategories').textContent = allData.sections.length;
+      document.getElementById('totalExperiences').textContent = allData.experiences.length;
+    }
+    
+    // Render categories
+    function renderCategories() {
+      const tabs = document.getElementById('categoryTabs');
+      tabs.innerHTML = `
+        <button class="category-tab ${currentCategory === 'all' ? 'active' : ''}" data-category="all">
+          <span>全部</span>
+        </button>
+        ${allData.sections.map(s => `
+          <button class="category-tab ${currentCategory === s.id ? 'active' : ''}" data-category="${s.id}">
+            <span>${s.icon || ''} ${s.name}</span>
+          </button>
+        `).join('')}
+      `;
+      
+      tabs.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          currentCategory = tab.dataset.category;
+          renderCategories();
+          renderTools();
+        });
+      });
+    }
+    
+    // Render tools
+    function renderTools() {
+      const grid = document.getElementById('toolGrid');
+      let tools = [];
+      
+      allData.sections.forEach(section => {
+        if (currentCategory === 'all' || currentCategory === section.id) {
+          section.tools.forEach(tool => {
+            tool._section = section;
+            tools.push(tool);
+          });
+        }
+      });
+      
+      // Filter by search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        tools = tools.filter(t => 
+          t.name.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q) ||
+          (t.tags || []).some(tag => tag.toLowerCase().includes(q))
+        );
+      }
+      
+      if (tools.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <p>没有找到匹配的工具</p>
+          </div>
+        `;
+        return;
+      }
+      
+      grid.innerHTML = tools.map(tool => `
+        <div class="tool-card">
+          <div class="tool-header">
+            <div class="tool-icon ${colorMap[tool._section.color] || 'blue'}">${tool._section.icon || '🔧'}</div>
+            <div class="tool-info">
+              <div class="tool-name">${tool.name}</div>
+              <div class="tool-desc">${tool.description}</div>
+            </div>
+          </div>
+          ${(tool.tags || []).length > 0 ? `
+            <div class="tool-tags">
+              ${tool.tags.map(tag => `<span class="tool-tag">${tag}</span>`).join('')}
+            </div>
+          ` : ''}
+          <div class="tool-footer">
+            <a href="${tool.url}" target="_blank" class="tool-link">
+              访问工具
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 17L17 7M7 7h10v10"/>
+              </svg>
+            </a>
+            <div class="tool-meta">
+              ${tool.resources?.length ? `<span>📚 ${tool.resources.length}个资源</span>` : ''}
+              ${tool.cases?.length ? `<span>📖 ${tool.cases.length}个案例</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // Render experiences
+    function renderExperiences() {
+      const grid = document.getElementById('experienceGrid');
+      
+      if (allData.experiences.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+            <p>还没有经验分享，点击右下角按钮分享你的心得</p>
+          </div>
+        `;
+        return;
+      }
+      
+      grid.innerHTML = allData.experiences.map(exp => `
+        <div class="experience-card">
+          <div class="experience-header">
+            <div class="experience-title">${exp.title}</div>
+            <div class="experience-date">${exp.date}</div>
+          </div>
+          <div class="experience-author">
+            <div class="author-avatar">${(exp.author || '匿名').charAt(0)}</div>
+            <div class="author-name">${exp.author || '匿名用户'}</div>
+          </div>
+          <div class="experience-content">${exp.content}</div>
+          ${exp.attachments && exp.attachments.length > 0 ? `
+            <div class="exp-attachments">
+              <div class="exp-attachments-title">附件</div>
+              ${exp.attachments.map(att => {
+                if (att.type === 'link') {
+                  return `<a href="${att.url}" target="_blank" class="exp-attachment-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+                      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+                    </svg>
+                    ${att.name}
+                  </a>`;
+                } else {
+                  return `<a href="${att.url}" target="_blank" class="exp-attachment-file">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    ${att.name}
+                  </a>`;
+                }
+              }).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+    
+    // Render Stars
+    function renderStars() {
+      const grid = document.getElementById('starsGrid');
+      
+      if (!allData.stars || allData.stars.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+            </svg>
+            <p>暂无AI达人表彰记录</p>
+          </div>
+        `;
+        return;
+      }
+      
+      grid.innerHTML = allData.stars.map(star => `
+        <div class="star-card">
+          <div class="star-avatar">
+            ${star.avatarUrl ? `<img src="${star.avatarUrl}" alt="${star.name}">` : (star.name || '⭐').charAt(0)}
+          </div>
+          <div class="star-name">${star.name}</div>
+          ${star.title ? `<div class="star-title">${star.title}</div>` : ''}
+          <div class="star-description">${star.description || ''}</div>
+          ${star.badges && star.badges.length > 0 ? `
+            <div class="star-badges">
+              ${star.badges.map(badge => `<span class="star-badge">${badge}</span>`).join('')}
+            </div>
+          ` : ''}
+          ${star.date ? `<div class="star-date">表彰日期：${star.date}</div>` : ''}
+        </div>
+      `).join('');
+    }
+    
+    // Search handler
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderTools();
+    });
+    
+    // Modal handlers
+    const shareBtn = document.getElementById('shareBtn');
+    const shareModal = document.getElementById('shareModal');
+    const closeModal = document.getElementById('closeModal');
+    const shareForm = document.getElementById('shareForm');
+    
+    shareBtn.addEventListener('click', () => {
+      shareModal.classList.add('active');
+    });
+    
+    closeModal.addEventListener('click', () => {
+      shareModal.classList.remove('active');
+    });
+    
+    shareModal.addEventListener('click', (e) => {
+      if (e.target === shareModal) {
+        shareModal.classList.remove('active');
+      }
+    });
+    
+    shareForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '发布中...';
+      
+      const newExp = {
+        id: 'exp' + Date.now(),
+        title: document.getElementById('expTitle').value,
+        author: document.getElementById('expAuthor').value || '匿名用户',
+        content: document.getElementById('expContent').value,
+        date: new Date().toISOString().split('T')[0]
+      };
+      
+      // 添加附件信息
+      const link = document.getElementById('expLink').value;
+      const linkType = document.getElementById('expLinkType').value;
+      if (link) {
+        newExp.attachments = newExp.attachments || [];
+        newExp.attachments.push({
+          type: 'link',
+          url: link,
+          name: linkType || '在线文档'
+        });
+      }
+      
+      // 上传文件
+      if (uploadedFile) {
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+        
+        try {
+          const uploadRes = await fetch(`${API_BASE}/upload`, {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            newExp.attachments = newExp.attachments || [];
+            newExp.attachments.push({
+              type: 'file',
+              url: uploadData.url,
+              name: uploadedFile.name,
+              size: uploadedFile.size
+            });
+          }
+        } catch (e) {
+          console.error('File upload failed:', e);
+        }
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}/experiences`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newExp)
+        });
+        
+        if (res.ok) {
+          showToast('分享成功！');
+          shareForm.reset();
+          removeUploadedFile();
+          switchAttachmentTab('link'); // Reset to link tab
+          shareModal.classList.remove('active');
+          loadData();
+        } else {
+          showToast('发布失败，请重试', 'error');
+        }
+      } catch (e) {
+        showToast('网络错误，请重试', 'error');
+      }
+      
+      submitBtn.disabled = false;
+      submitBtn.textContent = '发布分享';
+    });
+    
+    // Attachment Tab Switching
+    function switchAttachmentTab(type) {
+      document.querySelectorAll('.attachment-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.attachment-content').forEach(content => content.classList.remove('active'));
+      
+      document.querySelector(`[data-type="${type}"]`).classList.add('active');
+      document.getElementById('attach' + (type === 'link' ? 'Link' : 'Upload')).classList.add('active');
+    }
+    
+    // File Upload
+    let uploadedFile = null;
+    
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('expFile');
+    
+    uploadZone.addEventListener('click', () => fileInput.click());
+    
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+    
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) handleFileUpload(files[0]);
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handleFileUpload(e.target.files[0]);
+    });
+    
+    function handleFileUpload(file) {
+      // Validate file type
+      const allowedTypes = ['.docx', '.doc', '.pdf'];
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if (!allowedTypes.includes(ext)) {
+        showToast('仅支持 Word(.docx/.doc) 和 PDF 格式', 'error');
+        return;
+      }
+      
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('文件大小不能超过 10MB', 'error');
+        return;
+      }
+      
+      uploadedFile = file;
+      renderUploadedFiles();
+    }
+    
+    function renderUploadedFiles() {
+      const container = document.getElementById('uploadedFiles');
+      if (!uploadedFile) {
+        container.innerHTML = '';
+        return;
+      }
+      
+      const isPdf = uploadedFile.name.endsWith('.pdf');
+      container.innerHTML = `
+        <div class="uploaded-file">
+          <div class="uploaded-file-info">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              ${isPdf ? '<path d="M16 13H8M16 17H8M10 9H8"/>' : '<line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>'}
+            </svg>
+            <div>
+              <div class="uploaded-file-name">${uploadedFile.name}</div>
+              <div class="uploaded-file-size">${(uploadedFile.size / 1024).toFixed(1)} KB</div>
+            </div>
+          </div>
+          <button type="button" class="uploaded-file-remove" onclick="removeUploadedFile()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      `;
+    }
+    
+    window.removeUploadedFile = function() {
+      uploadedFile = null;
+      fileInput.value = '';
+      document.getElementById('uploadedFiles').innerHTML = '';
+    };
+    
+    // Toast
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast show ${type}`;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    // Auto refresh every 30 seconds
+    setInterval(loadData, 30000);
+    
+    // Tab Switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+      
+      document.getElementById('tab-' + tabName).classList.add('active');
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      
+      if (tabName === 'experience') {
+        document.getElementById('shareBtn').style.display = 'flex';
+      } else {
+        document.getElementById('shareBtn').style.display = 'none';
+      }
+    }
+    
+    // Init
+    loadData();
+    
+    // Hide share button initially
+    document.getElementById('shareBtn').style.display = 'none';
+    
+    // Smooth scroll for nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

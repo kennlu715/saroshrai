@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鹅厂 AI 工具探索地图</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    body { background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); min-height: 100vh; }
+    .card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
+    .tag { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .tag-blue { background: #EBF8FF; color: #2B6CB0; }
+    .tag-green { background: #F0FFF4; color: #276749; }
+    .tag-orange { background: #FFFAF0; color: #C05621; }
+    .link { color: #3182CE; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; transition: opacity 0.2s; }
+    .link:hover { opacity: 0.7; text-decoration: underline; }
+    .hero-section { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; border-radius: 24px; position: relative; overflow: hidden; }
+    .hero-section::before { content: ''; position: absolute; top: -50%; right: -20%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(79,172,254,0.15) 0%, transparent 70%); pointer-events: none; }
+    .nav-btn { padding: 10px 20px; border-radius: 12px; font-weight: 500; transition: all 0.2s; cursor: pointer; border: none; }
+    .nav-btn:hover { transform: scale(1.05); }
+    .nav-btn.active { background: white; color: #333; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .action-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; padding: 16px; }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+    .loading { display: flex; align-items: center; justify-content: center; min-height: 200px; }
+    .loading-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .live-indicator { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: #10b981; color: white; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .live-dot { width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .section-header { position: relative; padding-left: 24px; }
+    .section-header::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 2px; }
+    .section-blue::before { background: linear-gradient(180deg, #3182CE, #63B3ED); }
+    .section-purple::before { background: linear-gradient(180deg, #6B46C1, #9F7AEA); }
+    .section-orange::before { background: linear-gradient(180deg, #C05621, #ED8936); }
+    .section-green::before { background: linear-gradient(180deg, #276749, #48BB78); }
+    .section-gray::before { background: linear-gradient(180deg, #718096, #A0AEC0); }
+    @media (max-width: 768px) {
+      .grid-container { grid-template-columns: 1fr; }
+      .nav-scroll { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+    }
+  </style>
+</head>
+<body class="py-8 px-4 md:px-8">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- 封面区域 -->
+    <div class="hero-section p-8 md:p-12 mb-10">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold mb-4">鹅厂 AI 工具探索地图</h1>
+          <p class="text-lg md:text-xl opacity-80 mb-6">从编程开发到游戏生产 — 全场景 AI 工具矩阵</p>
+        </div>
+        <div id="liveStatus" class="live-indicator">
+          <span class="live-dot"></span>
+          <span>实时更新</span>
+        </div>
+      </div>
+      <div id="categoryBadges" class="flex flex-wrap gap-3 mb-6">
+        <!-- 动态生成 -->
+      </div>
+      <p class="text-sm opacity-60" id="lastUpdate">数据加载中...</p>
+    </div>
+
+    <!-- 导航栏 -->
+    <div class="nav-scroll flex gap-3 mb-8 pb-2" id="navBar">
+      <!-- 动态生成 -->
+    </div>
+
+    <!-- 内容区域 -->
+    <div id="contentArea">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let appData = null;
+    let currentSection = null;
+
+    // 加载数据
+    async function loadData() {
+      try {
+        const res = await fetch('/server/api/data');
+        appData = await res.json();
+        render();
+        
+        // 更新最后更新时间
+        if (appData.lastUpdate) {
+          document.getElementById('lastUpdate').textContent = 
+            `最后更新: ${new Date(appData.lastUpdate).toLocaleString('zh-CN')} | 腾讯内部 · AI 工具全景探索`;
+        }
+        
+        // 隐藏加载状态
+        document.querySelector('.loading')?.remove();
+      } catch (e) {
+        document.getElementById('contentArea').innerHTML = `
+          <div class="card p-8 text-center">
+            <p class="text-red-500 mb-4">⚠️ 无法连接服务器</p>
+            <p class="text-gray-500">请确保后端服务已启动 (node server/server.js)</p>
+          </div>
+        `;
+      }
+    }
+
+    // 渲染页面
+    function render() {
+      renderNavBar();
+      renderCategoryBadges();
+      renderContent();
+    }
+
+    // 渲染导航栏
+    function renderNavBar() {
+      const navBar = document.getElementById('navBar');
+      const colorMap = {
+        blue: { bg: '#EBF8FF', text: '#2B6CB0' },
+        purple: { bg: '#FAF5FF', text: '#6B46C1' },
+        orange: { bg: '#FFFAF0', text: '#C05621' },
+        green: { bg: '#F0FFF4', text: '#276749' },
+        gray: { bg: '#F7FAFC', text: '#4A5568' }
+      };
+
+      navBar.innerHTML = appData.sections.map(section => {
+        const colors = colorMap[section.color] || colorMap.blue;
+        return `<button class="nav-btn" style="background: ${colors.bg}; color: ${colors.text};" onclick="scrollToSection('${section.id}')">${section.icon || '📁'} ${section.name}</button>`;
+      }).join('');
+    }
+
+    // 渲染分类标签
+    function renderCategoryBadges() {
+      const badges = document.getElementById('categoryBadges');
+      const colorMap = {
+        blue: '#EBF8FF',
+        purple: '#FAF5FF',
+        orange: '#FFFAF0',
+        green: '#F0FFF4',
+        gray: '#F7FAFC'
+      };
+
+      badges.innerHTML = appData.sections.map(section => {
+        const bg = colorMap[section.color] || colorMap.blue;
+        return `<span class="inline-flex items-center px-4 py-2 rounded-xl font-semibold text-sm" style="background: ${bg};">${section.icon || '📁'} ${section.name}</span>`;
+      }).join('');
+    }
+
+    // 渲染内容
+    function renderContent() {
+      const container = document.getElementById('contentArea');
+      const sectionColors = {
+        blue: 'section-blue',
+        purple: 'section-purple',
+        orange: 'section-orange',
+        green: 'section-green',
+        gray: 'section-gray'
+      };
+      const colorMap = {
+        blue: { bg: '#EBF8FF', text: '#2B6CB0' },
+        purple: { bg: '#FAF5FF', text: '#6B46C1' },
+        orange: { bg: '#FFFAF0', text: '#C05621' },
+        green: { bg: '#F0FFF4', text: '#276749' },
+        gray: { bg: '#F7FAFC', text: '#4A5568' }
+      };
+
+      container.innerHTML = appData.sections.map((section, index) => {
+        const sectionClass = sectionColors[section.color] || 'section-blue';
+        const sectionIndex = String(index + 1).padStart(2, '0');
+        
+        return `
+          <section id="${section.id}" class="mb-16 fade-in">
+            <div class="section-header ${sectionClass} mb-6">
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Chapter ${sectionIndex}</p>
+              <h2 class="text-2xl font-bold text-gray-800">${section.name} <span class="text-gray-400 font-normal text-base ml-2">${section.nameEn || ''}</span></h2>
+            </div>
+            <div class="grid-container">
+              ${section.tools.length > 0 ? section.tools.map(tool => renderToolCard(tool, section.color)).join('') : `
+                <div class="card p-8 text-center text-gray-400">
+                  <p>暂无工具</p>
+                </div>
+              `}
+            </div>
+          </section>
+        `;
+      }).join('');
+
+      // 渲染行动建议（最后一个板块后）
+      if (appData.sections.length > 0) {
+        const lastSection = container.querySelector('section:last-child');
+        if (lastSection) {
+          lastSection.insertAdjacentHTML('afterend', renderActions());
+        }
+      }
+    }
+
+    // 渲染工具卡片
+    function renderToolCard(tool, sectionColor) {
+      const colorMap = {
+        blue: { tag: 'tag-blue', resource: 'tag-green', case: 'tag-orange' },
+        purple: { tag: 'tag-blue', resource: 'tag-green', case: 'tag-orange' },
+        orange: { tag: 'tag-blue', resource: 'tag-green', case: 'tag-orange' },
+        green: { tag: 'tag-blue', resource: 'tag-green', case: 'tag-orange' },
+        gray: { tag: 'tag-blue', resource: 'tag-green', case: 'tag-orange' }
+      };
+      const colors = colorMap[sectionColor] || colorMap.blue;
+
+      return `
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-gray-800 mb-2">${tool.name}</h3>
+          <p class="text-sm text-gray-500 mb-3">${tool.description || ''}</p>
+          ${tool.url ? `<a href="${tool.url}" target="_blank" class="link mb-4">🔗 访问官网</a>` : ''}
+          
+          ${tool.tags && tool.tags.length > 0 ? `
+            <div class="flex flex-wrap gap-2 mt-3">
+              ${tool.tags.map(t => `<span class="tag ${colors.tag}">${t}</span>`).join('')}
+            </div>
+          ` : ''}
+          
+          ${tool.resources && tool.resources.length > 0 ? `
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <p class="text-xs text-gray-400 mb-2">🎬 官方资源</p>
+              <div class="flex flex-wrap gap-2">
+                ${tool.resources.map(r => `<span class="tag ${colors.resource}">${r}</span>`).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          ${tool.cases && tool.cases.length > 0 ? `
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <p class="text-xs text-gray-400 mb-2">📝 用户案例</p>
+              <div class="flex flex-wrap gap-2">
+                ${tool.cases.map(c => `<span class="tag ${colors.case}">${c}</span>`).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // 渲染行动建议
+    function renderActions() {
+      if (!appData.actions || appData.actions.length === 0) return '';
+
+      return `
+        <div class="mt-10">
+          <div class="section-header section-blue mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">行动建议</h2>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-4">
+              ${appData.actions.map(action => `
+                <div class="action-card">
+                  <div class="flex items-center gap-3 mb-2">
+                    <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm font-semibold">第${action.week}周</span>
+                    <span class="font-bold">${action.title}</span>
+                  </div>
+                  <p class="text-sm opacity-80">${action.desc}</p>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-10 text-center p-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl flex items-center justify-center">
+              <p class="text-gray-600 font-medium">核心主张：亲手干 · 深度用 AI · 把 Agent 配进每条业务流 · 建立团队 AI 用例库</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 滚动到板块
+    function scrollToSection(id) {
+      const section = document.getElementById(id);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // 更新导航状态
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+      }
+    }
+
+    // 滚动时更新导航
+    window.addEventListener('scroll', () => {
+      const sections = appData.sections.map(s => s.id);
+      const navBtns = document.querySelectorAll('.nav-btn');
+      
+      sections.forEach((sectionId, index) => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          if (rect.top <= 150 && rect.bottom >= 150) {
+            navBtns.forEach(btn => btn.classList.remove('active'));
+            if (navBtns[index]) {
+              navBtns[index].classList.add('active');
+            }
+          }
+        }
+      });
+    });
+
+    // 自动刷新（每30秒）
+    setInterval(loadData, 30000);
+
+    // 初始化
+    loadData();
+  </script>
+</body>
+</html>
