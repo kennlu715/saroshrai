@@ -1263,30 +1263,127 @@
     <p style="margin-top: 8px;">Last updated: <span id="lastUpdate">-</span></p>
   </footer>
   
-  <script>
-    // API Base
-    const API_BASE = '/api';
-    
+<script>
+    // Static data (no backend required)
+    const STATIC_DATA = {
+      lastUpdate: new Date().toISOString(),
+      sections: [
+        {
+          id: 'coding',
+          name: '编程开发',
+          nameEn: 'CODING & BUILD',
+          color: 'blue',
+          icon: '💻',
+          tools: [
+            { id: 'codebuddy', name: 'CodeBuddy', description: '一站式 AI 编码助手，含 IDE、插件、CLI 多种形态', url: 'https://codebuddy.cn', tags: ['IDE', '插件', 'CLI'], resources: ['全家桶介绍', 'IDE版', '插件版', 'CLI版'], cases: ['医疗团队AI全流程落地', '养出能思考的专家'] },
+            { id: 'workbuddy', name: 'WorkBuddy', description: '腾讯自研研发工作台，代码审查与团队协作', url: 'https://workbuddy.woa.com', tags: ['代码审查', '协作'], resources: [], cases: [] },
+            { id: 'with', name: 'With', description: '腾讯内部协作平台，团队沟通与项目管理', url: 'https://with.woa.com', tags: ['协作', '沟通'], resources: [], cases: [] },
+            { id: 'knot', name: 'Knot', description: '代码知识图谱工具，代码理解与导航', url: 'https://knot.woa.com', tags: ['知识图谱', '代码理解'], resources: [], cases: [] }
+          ]
+        },
+        {
+          id: 'design',
+          name: '设计与创意',
+          nameEn: 'DESIGN & CREATE',
+          color: 'purple',
+          icon: '🎨',
+          tools: [
+            { id: 'ardot', name: 'Ardot', description: '设计资产管理与协作平台', url: 'https://ardot.woa.com', tags: ['设计资产', '协作'], resources: [], cases: [] },
+            { id: 'sanquan', name: '三谦', description: '创意设计工具与资源库', url: 'https://sanquan.woa.com', tags: ['创意', '设计'], resources: [], cases: [] },
+            { id: 'xdream', name: 'XDream', description: 'AI 驱动的创意设计平台', url: 'https://xdream.woa.com', tags: ['AI创意', '设计'], resources: [], cases: [] },
+            { id: 'miora', name: 'Miora', description: '设计灵感与素材平台', url: 'https://miora.woa.com', tags: ['灵感', '素材'], resources: [], cases: [] }
+          ]
+        },
+        {
+          id: 'productivity',
+          name: '智能办公',
+          nameEn: 'INTELLIGENT OFFICE',
+          color: 'orange',
+          icon: '⚡',
+          tools: [
+            { id: 'hunyuan', name: '混元大模型', description: '腾讯自研大语言模型，智能问答与内容生成', url: 'https://hunyuan.qq.com', tags: ['大模型', 'AI助手'], resources: [], cases: [] },
+            { id: 'yuanbao', name: '元宝', description: '腾讯混元 AI 智能助手 APP', url: 'https://yuanbao.qq.com', tags: ['智能助手', '移动端'], resources: [], cases: [] },
+            { id: 'openclaw', name: 'OpenClaw', description: 'AI 能力开放平台', url: 'https://openclaw.woa.com', tags: ['AI开放', 'API'], resources: [], cases: [] },
+            { id: 'iwiki', name: 'iWiki', description: '企业知识管理与搜索平台', url: 'https://iwiki.woa.com', tags: ['知识管理', '搜索'], resources: [], cases: [] }
+          ]
+        },
+        {
+          id: 'data',
+          name: '数据分析',
+          nameEn: 'DATA & ANALYTICS',
+          color: 'green',
+          icon: '📊',
+          tools: [
+            { id: 'giinex', name: 'GiiNEX', description: '企业级数据分析与可视化平台', url: 'https://giinex.woa.com', tags: ['数据分析', '可视化'], resources: [], cases: [] },
+            { id: 'pandasai', name: 'PandasAI', description: 'AI 增强的数据分析工具', url: 'https://pandas.ai', tags: ['AI分析', '数据处理'], resources: [], cases: [] },
+            { id: 'tableau', name: 'Tableau', description: '交互式数据可视化软件', url: 'https://www.tableau.com', tags: ['可视化', 'BI'], resources: [], cases: [] },
+            { id: 'powerbi', name: 'Power BI', description: '微软商业智能分析工具', url: 'https://powerbi.microsoft.com', tags: ['BI', '可视化'], resources: [], cases: [] }
+          ]
+        },
+        {
+          id: 'video',
+          name: '视频制作',
+          nameEn: 'VIDEO & MEDIA',
+          color: 'pink',
+          icon: '🎬',
+          tools: [
+            { id: 'tencentvideo', name: '腾讯智影', description: 'AI 驱动的在线视频创作平台', url: 'https://zenvideo.qq.com', tags: ['AI视频', '剪辑'], resources: [], cases: [] },
+            { id: 'capcut', name: 'CapCut', description: '字节跳动视频编辑工具', url: 'https://www.capcut.com', tags: ['视频编辑', '剪辑'], resources: [], cases: [] },
+            { id: 'runway', name: 'Runway', description: 'AI 视频生成与编辑平台', url: 'https://runwayml.com', tags: ['AI生成', '视频特效'], resources: [], cases: [] },
+            { id: 'sora', name: 'Sora', description: 'OpenAI 视频生成模型', url: 'https://openai.com/sora', tags: ['视频生成', 'AI'], resources: [], cases: [] }
+          ]
+        },
+        {
+          id: 'test',
+          name: '测试效率',
+          nameEn: 'TEST & QA',
+          color: 'cyan',
+          icon: '🧪',
+          tools: [
+            { id: 'testbuddy', name: 'TestBuddy', description: 'AI 智能测试平台', url: 'https://testbuddy.woa.com', tags: ['AI测试', '自动化'], resources: [], cases: [] },
+            { id: 'autify', name: 'Autify', description: 'AI 测试自动化平台', url: 'https://autify.com', tags: ['测试自动化', 'AI'], resources: [], cases: [] },
+            { id: 'mabl', name: 'Mabl', description: '智能测试维护平台', url: 'https://mabl.com', tags: ['测试', 'CI/CD'], resources: [], cases: [] },
+            { id: 'functionize', name: 'Functionize', description: 'AI 驱动的功能测试平台', url: 'https://functionize.com', tags: ['功能测试', 'AI'], resources: [], cases: [] }
+          ]
+        }
+      ],
+      experiences: [
+        { id: 'exp1', title: 'CodeBuddy 提效心得', author: '工程师小王', content: '使用 CodeBuddy 后，代码审查效率提升了 50%，特别是在处理重复性高的代码时效果显著。强烈推荐搭配 IDE 插件使用，体验更佳。', date: '2026-05-10' }
+      ],
+      stars: [
+        { id: 'star1', name: '张明', title: 'AI工具探索先锋', avatarUrl: '', description: '累计分享 12 篇 AI 工具使用心得，帮助 50+ 同事提升工作效率。精通 CodeBuddy、GiiNEX 等工具，擅长解决各类技术难题。', badges: ['工具达人', '分享之星'], date: '2026-05-01' },
+        { id: 'star2', name: '李华', title: '智能办公先锋', avatarUrl: '', description: '在部门内推广 AI 工具落地，带领团队效率提升 40%。善于挖掘工具潜力，总结出一套实用的 AI 提效方法论。', badges: ['团队 leader', '最佳实践'], date: '2026-05-05' },
+        { id: 'star3', name: '王芳', title: '创意设计达人', avatarUrl: '', description: '深度使用设计类 AI 工具，在多个项目中成功应用 AI 辅助设计，缩短设计周期 60%，获得团队一致好评。', badges: ['设计专家', '创新先锋'], date: '2026-05-08' }
+      ]
+    };
+
     // State
     let allData = { sections: [], experiences: [], stars: [] };
     let currentCategory = 'all';
     let searchQuery = '';
-    
+
     // Color map
     const colorMap = {
-      blue: 'blue', purple: 'purple', green: 'green', 
+      blue: 'blue', purple: 'purple', green: 'green',
       orange: 'orange', red: 'red', pink: 'pink', cyan: 'cyan'
     };
-    
-    // Load data
-    async function loadData() {
+
+    // Load data (static - no backend required)
+    function loadData() {
+      // 合并静态数据和本地存储的分享
+      allData = JSON.parse(JSON.stringify(STATIC_DATA));
+      
+      // 加载本地分享
       try {
-        const res = await fetch(`${API_BASE}/data`);
-        allData = await res.json();
-        renderAll();
+        const localExp = JSON.parse(localStorage.getItem('localExperiences') || '[]');
+        if (localExp.length > 0) {
+          allData.experiences = [...localExp, ...allData.experiences];
+        }
       } catch (e) {
-        showToast('加载数据失败，请刷新重试', 'error');
+        console.error('Failed to load local experiences:', e);
       }
+      
+      renderAll();
     }
     
     // Render all
@@ -1537,51 +1634,45 @@
         });
       }
       
-      // 上传文件
+      // 上传文件 - 本地模式（仅保存文件信息到本地）
       if (uploadedFile) {
-        const formData = new FormData();
-        formData.append('file', uploadedFile);
-        
-        try {
-          const uploadRes = await fetch(`${API_BASE}/upload`, {
-            method: 'POST',
-            body: formData
-          });
-          
-          if (uploadRes.ok) {
-            const uploadData = await uploadRes.json();
-            newExp.attachments = newExp.attachments || [];
-            newExp.attachments.push({
-              type: 'file',
-              url: uploadData.url,
-              name: uploadedFile.name,
-              size: uploadedFile.size
-            });
-          }
-        } catch (e) {
-          console.error('File upload failed:', e);
-        }
+        newExp.attachments = newExp.attachments || [];
+        // 在本地模式下，仅保存文件信息（实际文件需要用户自行上传到云端）
+        newExp.attachments.push({
+          type: 'file',
+          name: uploadedFile.name,
+          size: uploadedFile.size,
+          note: '请手动上传到云盘并粘贴链接'
+        });
+        showToast('注意：请将文件上传到云盘并添加链接', 'info');
       }
       
+      // 本地存储模式（无需后端）
       try {
-        const res = await fetch(`${API_BASE}/experiences`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newExp)
-        });
+        // 从本地存储获取现有分享
+        const localExp = JSON.parse(localStorage.getItem('localExperiences') || '[]');
         
-        if (res.ok) {
-          showToast('分享成功！');
-          shareForm.reset();
-          removeUploadedFile();
-          switchAttachmentTab('link'); // Reset to link tab
-          shareModal.classList.remove('active');
-          loadData();
-        } else {
-          showToast('发布失败，请重试', 'error');
-        }
+        // 添加新分享
+        newExp.id = 'exp_local_' + Date.now();
+        newExp.date = new Date().toISOString().split('T')[0];
+        localExp.unshift(newExp);
+        
+        // 保存到本地存储
+        localStorage.setItem('localExperiences', JSON.stringify(localExp));
+        
+        // 更新显示（合并本地和默认分享）
+        const mergedExp = [...localExp, ...STATIC_DATA.experiences];
+        allData.experiences = mergedExp;
+        renderAll();
+        
+        showToast('分享已保存到本地！');
+        shareForm.reset();
+        removeUploadedFile();
+        switchAttachmentTab('link');
+        shareModal.classList.remove('active');
       } catch (e) {
-        showToast('网络错误，请重试', 'error');
+        console.error('Save failed:', e);
+        showToast('保存失败，请重试', 'error');
       }
       
       submitBtn.disabled = false;

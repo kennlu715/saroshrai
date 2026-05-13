@@ -81,32 +81,63 @@
   </div>
 
   <script>
-    let appData = null;
+    // 内嵌静态数据 - 无需后端服务器
+    const appData = {
+      lastUpdate: new Date().toISOString(),
+      sections: [
+        { id: 'coding', name: '编程开发', nameEn: 'CODING & BUILD', color: 'blue', icon: '💻', tools: [
+          { id: 'codebuddy', name: 'CodeBuddy', description: '一站式 AI 编码助手，含 IDE、插件、CLI 多种形态', url: 'https://codebuddy.cn', tags: ['IDE', '插件', 'CLI'], resources: ['全家桶介绍', 'IDE版', '插件版', 'CLI版'], cases: ['医疗团队AI全流程落地', '养出能思考的专家'] },
+          { id: 'workbuddy', name: 'WorkBuddy', description: '腾讯自研研发工作台，代码审查与团队协作', url: 'https://workbuddy.woa.com', tags: ['代码审查', '协作'], resources: [], cases: [] },
+          { id: 'with', name: 'With', description: '腾讯内部协作平台，团队沟通与项目管理', url: 'https://with.woa.com', tags: ['协作', '沟通'], resources: [], cases: [] },
+          { id: 'knot', name: 'Knot', description: '代码知识图谱工具，代码理解与导航', url: 'https://knot.woa.com', tags: ['知识图谱', '代码理解'], resources: [], cases: [] }
+        ]},
+        { id: 'design', name: '设计与创意', nameEn: 'DESIGN & CREATE', color: 'purple', icon: '🎨', tools: [
+          { id: 'ardot', name: 'Ardot', description: '设计资产管理与协作平台', url: 'https://ardot.woa.com', tags: ['设计资产', '协作'], resources: [], cases: [] },
+          { id: 'sanquan', name: '三谦', description: '创意设计工具与资源库', url: 'https://sanquan.woa.com', tags: ['创意', '设计'], resources: [], cases: [] },
+          { id: 'xdream', name: 'XDream', description: 'AI 驱动的创意设计平台', url: 'https://xdream.woa.com', tags: ['AI创意', '设计'], resources: [], cases: [] },
+          { id: 'miora', name: 'Miora', description: '设计灵感与素材平台', url: 'https://miora.woa.com', tags: ['灵感', '素材'], resources: [], cases: [] }
+        ]},
+        { id: 'productivity', name: '智能办公', nameEn: 'INTELLIGENT OFFICE', color: 'orange', icon: '⚡', tools: [
+          { id: 'hunyuan', name: '混元大模型', description: '腾讯全链路自研大模型，API/SDK 接入，支持私有化部署', url: 'https://hunyuan.qq.com', tags: ['大模型', 'API'], resources: [], cases: [] },
+          { id: 'yuanbao', name: '元宝', description: '腾讯混元 AI 智能助手 APP', url: 'https://yuanbao.qq.com', tags: ['智能助手', '移动端'], resources: [], cases: [] },
+          { id: 'openclaw', name: 'OpenClaw', description: 'AI 能力开放平台', url: 'https://openclaw.woa.com', tags: ['AI开放', 'API'], resources: [], cases: [] },
+          { id: 'iwiki', name: 'iWiki', description: '企业知识管理与搜索平台', url: 'https://iwiki.woa.com', tags: ['知识管理', '搜索'], resources: [], cases: [] }
+        ]},
+        { id: 'data', name: '数据分析', nameEn: 'DATA & ANALYTICS', color: 'green', icon: '📊', tools: [
+          { id: 'giinex', name: 'GiiNEX', description: '企业级数据分析与可视化平台', url: 'https://giinex.woa.com', tags: ['数据分析', '可视化'], resources: [], cases: [] },
+          { id: 'pandasai', name: 'PandasAI', description: 'AI 增强的数据分析工具', url: 'https://pandas.ai', tags: ['AI分析', '数据处理'], resources: [], cases: [] },
+          { id: 'tableau', name: 'Tableau', description: '交互式数据可视化软件', url: 'https://www.tableau.com', tags: ['可视化', 'BI'], resources: [], cases: [] },
+          { id: 'powerbi', name: 'Power BI', description: '微软商业智能分析工具', url: 'https://powerbi.microsoft.com', tags: ['BI', '可视化'], resources: [], cases: [] }
+        ]},
+        { id: 'video', name: '视频制作', nameEn: 'VIDEO & MEDIA', color: 'gray', icon: '🎬', tools: [
+          { id: 'tencentvideo', name: '腾讯智影', description: 'AI 驱动的在线视频创作平台', url: 'https://zenvideo.qq.com', tags: ['AI视频', '剪辑'], resources: [], cases: [] },
+          { id: 'capcut', name: 'CapCut', description: '字节跳动视频编辑工具', url: 'https://www.capcut.com', tags: ['视频编辑', '剪辑'], resources: [], cases: [] },
+          { id: 'runway', name: 'Runway', description: 'AI 视频生成与编辑平台', url: 'https://runwayml.com', tags: ['AI生成', '视频特效'], resources: [], cases: [] },
+          { id: 'sora', name: 'Sora', description: 'OpenAI 视频生成模型', url: 'https://openai.com/sora', tags: ['视频生成', 'AI'], resources: [], cases: [] }
+        ]},
+        { id: 'test', name: '测试效率', nameEn: 'TEST & QA', color: 'green', icon: '🧪', tools: [
+          { id: 'testbuddy', name: 'TestBuddy', description: 'AI 智能测试平台', url: 'https://testbuddy.woa.com', tags: ['AI测试', '自动化'], resources: [], cases: [] },
+          { id: 'autify', name: 'Autify', description: 'AI 测试自动化平台', url: 'https://autify.com', tags: ['测试自动化', 'AI'], resources: [], cases: [] },
+          { id: 'mabl', name: 'Mabl', description: '智能测试维护平台', url: 'https://mabl.com', tags: ['测试', 'CI/CD'], resources: [], cases: [] },
+          { id: 'functionize', name: 'Functionize', description: 'AI 驱动的功能测试平台', url: 'https://functionize.com', tags: ['功能测试', 'AI'], resources: [], cases: [] }
+        ]}
+      ]
+    };
+
     let currentSection = null;
 
-    // 加载数据
-    async function loadData() {
-      try {
-        const res = await fetch('/server/api/data');
-        appData = await res.json();
-        render();
-        
-        // 更新最后更新时间
-        if (appData.lastUpdate) {
-          document.getElementById('lastUpdate').textContent = 
-            `最后更新: ${new Date(appData.lastUpdate).toLocaleString('zh-CN')} | 腾讯内部 · AI 工具全景探索`;
-        }
-        
-        // 隐藏加载状态
-        document.querySelector('.loading')?.remove();
-      } catch (e) {
-        document.getElementById('contentArea').innerHTML = `
-          <div class="card p-8 text-center">
-            <p class="text-red-500 mb-4">⚠️ 无法连接服务器</p>
-            <p class="text-gray-500">请确保后端服务已启动 (node server/server.js)</p>
-          </div>
-        `;
+    // 加载数据（静态 - 无需后端）
+    function loadData() {
+      render();
+      
+      // 更新最后更新时间
+      if (appData.lastUpdate) {
+        document.getElementById('lastUpdate').textContent = 
+          `最后更新: ${new Date(appData.lastUpdate).toLocaleString('zh-CN')} | 腾讯内部 · AI 工具全景探索`;
       }
+      
+      // 隐藏加载状态
+      document.querySelector('.loading')?.remove();
     }
 
     // 渲染页面
