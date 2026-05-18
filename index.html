@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>萨罗斯-鹅厂AI工具与探索地图</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -424,6 +427,54 @@
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    /* Like Button */
+    .like-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.25s;
+      user-select: none;
+    }
+
+    .like-btn:hover {
+      border-color: var(--pink);
+      color: var(--pink);
+      background: rgba(236, 72, 153, 0.08);
+    }
+
+    .like-btn.liked {
+      border-color: var(--pink);
+      color: var(--pink);
+      background: rgba(236, 72, 153, 0.12);
+    }
+
+    .like-btn .like-icon {
+      display: inline-flex;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .like-btn.liked .like-icon {
+      transform: scale(1.2);
+    }
+
+    .like-btn.animate .like-icon {
+      animation: likePopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes likePopIn {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.4); }
+      60% { transform: scale(0.9); }
+      100% { transform: scale(1.2); }
     }
     
     /* Experience Section */
@@ -1263,6 +1314,7 @@
     <p style="margin-top: 8px;">Last updated: <span id="lastUpdate">-</span></p>
   </footer>
   
+<script src="https://unpkg.com/@cloudbase/js-sdk@1.9.0/dist/cloudbase.full.js"></script>
 <script>
     // Static data (no backend required)
     const STATIC_DATA = {
@@ -1276,7 +1328,7 @@
           icon: '💻',
           tools: [
             { id: 'codebuddy', name: 'CodeBuddy', description: '一站式 AI 编码助手，含 IDE、插件、CLI 多种形态', url: 'https://codebuddy.cn', tags: ['IDE', '插件', 'CLI'], resources: ['全家桶介绍', 'IDE版', '插件版', 'CLI版'], cases: ['医疗团队AI全流程落地', '养出能思考的专家'] },
-            { id: 'workbuddy', name: 'WorkBuddy', description: '腾讯自研研发工作台，代码审查与团队协作', url: 'https://workbuddy.woa.com', tags: ['代码审查', '协作'], resources: [], cases: [] },
+            { id: 'workbuddy', name: 'WorkBuddy', description: '全场景职场 AI 智能体桌面工作台，一句话让 AI 帮你干活', url: 'https://copilot.tencent.com/work/', tags: ['AI办公', '智能体', '协作'], resources: [], cases: [] },
             { id: 'with', name: 'With', description: '腾讯内部协作平台，团队沟通与项目管理', url: 'https://with.woa.com', tags: ['协作', '沟通'], resources: [], cases: [] },
             { id: 'knot', name: 'Knot', description: '代码知识图谱工具，代码理解与导航', url: 'https://knot.woa.com', tags: ['知识图谱', '代码理解'], resources: [], cases: [] }
           ]
@@ -1362,18 +1414,102 @@
     let currentCategory = 'all';
     let searchQuery = '';
 
+    // ========== 点赞功能 ==========
+    const LIKE_STORAGE_KEY = 'ai_map_likes';
+    function getLikes() {
+      try { return JSON.parse(localStorage.getItem(LIKE_STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+    }
+    function isLiked(toolId) { return !!getLikes()[toolId]; }
+    function getLikeCount(toolId) { return getLikes()[toolId + '_count'] || 0; }
+    function toggleLike(toolId) {
+      const likes = getLikes();
+      const wasLiked = !!likes[toolId];
+      let count = likes[toolId + '_count'] || 0;
+      if (wasLiked) { delete likes[toolId]; count = Math.max(0, count - 1); }
+      else { likes[toolId] = true; count += 1; }
+      likes[toolId + '_count'] = count;
+      localStorage.setItem(LIKE_STORAGE_KEY, JSON.stringify(likes));
+      return { liked: !wasLiked, count };
+    }
+
+    // ========== CloudBase 云数据 ==========
+    const CB_CONFIG = { envId: 'kennylu-d7gb55m7xaeaff464', region: 'ap-shanghai' };
+    let cbApp = null;
+
     // Color map
     const colorMap = {
       blue: 'blue', purple: 'purple', green: 'green',
       orange: 'orange', red: 'red', pink: 'pink', cyan: 'cyan'
     };
 
-    // Load data (static - no backend required)
-    function loadData() {
+    // Load data - 优先 CloudBase 云端 > localStorage > 静态数据
+    async function loadData() {
       // 合并静态数据和本地存储的分享
       allData = JSON.parse(JSON.stringify(STATIC_DATA));
-      
-      // 加载本地分享
+
+      // 1. 尝试从 CloudBase 云端读取已发布数据
+      if (CB_CONFIG.envId) {
+        try {
+          if (!cbApp) {
+            cbApp = cloudbase.init({ env: CB_CONFIG.envId, region: CB_CONFIG.region });
+            const auth = cbApp.auth({ persistence: 'local' });
+            const loginState = await auth.getLoginState();
+            if (!loginState) await auth.anonymousAuthProvider().signIn();
+          }
+          const db = cbApp.database();
+          const pubDoc = await db.collection('ai_map_data').doc('published').get();
+          if (pubDoc.data && pubDoc.data[0]) {
+            // 兼容两种格式：新版 {data: {sections:...}} 和旧版 {categories:...} 平铺
+            let cloudData = pubDoc.data[0].data;
+            if (!cloudData) {
+              // 旧格式：数据直接平铺在文档顶层
+              const raw = pubDoc.data[0];
+              cloudData = {
+                sections: raw.sections || raw.categories || [],
+                experiences: raw.experiences || [],
+                stars: raw.stars || raw.aiStars || []
+              };
+            } else {
+              // 新格式但字段名可能是旧版
+              if (!cloudData.sections && cloudData.categories) cloudData.sections = cloudData.categories;
+              if (!cloudData.stars && cloudData.aiStars) cloudData.stars = cloudData.aiStars;
+            }
+            if (cloudData.sections && cloudData.sections.length > 0) {
+              allData.sections = cloudData.sections;
+              if (cloudData.experiences) allData.experiences = cloudData.experiences;
+              if (cloudData.stars) allData.stars = cloudData.stars;
+              allData.lastUpdate = pubDoc.data[0].updatedAt || allData.lastUpdate;
+              console.log('[CloudBase] 已从云端加载数据，板块数:', allData.sections.length);
+              // 加载本地用户分享（不要跳过）
+              try {
+                const localExp = JSON.parse(localStorage.getItem('localExperiences') || '[]');
+                if (localExp.length > 0) {
+                  allData.experiences = [...localExp, ...(allData.experiences || [])];
+                }
+              } catch (e) {}
+              renderAll();
+              return;
+            }
+          }
+        } catch(e) {
+          console.warn('[CloudBase] 云端加载失败:', e.message);
+        }
+      }
+
+      // 2. 尝试从 localStorage 读取管理后台发布的数据
+      try {
+        const stored = localStorage.getItem('aiMapAdmin');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.sections && parsed.sections.length > 0) {
+            allData.sections = parsed.sections;
+            if (parsed.experiences) allData.experiences = parsed.experiences;
+            if (parsed.stars) allData.stars = parsed.stars;
+          }
+        }
+      } catch(e) {}
+
+      // 3. 加载本地用户分享
       try {
         const localExp = JSON.parse(localStorage.getItem('localExperiences') || '[]');
         if (localExp.length > 0) {
@@ -1487,6 +1623,10 @@
             <div class="tool-meta">
               ${tool.resources?.length ? `<span>📚 ${tool.resources.length}个资源</span>` : ''}
               ${tool.cases?.length ? `<span>📖 ${tool.cases.length}个案例</span>` : ''}
+              <button class="like-btn ${isLiked(tool.id) ? 'liked' : ''}" data-tool-id="${tool.id}" onclick="handleLike(this, '${tool.id}')">
+                <span class="like-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="${isLiked(tool.id) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></span>
+                <span class="like-count">${getLikeCount(tool.id)}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1778,6 +1918,23 @@
       toast.className = `toast show ${type}`;
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
+
+    // Like handler
+    window.handleLike = function(btn, toolId) {
+      const result = toggleLike(toolId);
+      const icon = btn.querySelector('.like-icon svg');
+      const countEl = btn.querySelector('.like-count');
+      if (result.liked) {
+        btn.classList.add('liked', 'animate');
+        icon.setAttribute('fill', 'currentColor');
+      } else {
+        btn.classList.remove('liked', 'animate');
+        icon.setAttribute('fill', 'none');
+      }
+      countEl.textContent = result.count;
+      // Remove animation class after it finishes
+      setTimeout(() => btn.classList.remove('animate'), 400);
+    };
     
     // Auto refresh every 30 seconds
     setInterval(loadData, 30000);
