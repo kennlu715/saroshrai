@@ -807,13 +807,13 @@
         <div id="loginError" class="login-error"></div>
         
         <div class="form-group">
-          <label class="form-label">企业邮箱</label>
-          <input type="email" class="form-input" id="loginEmail" placeholder="name@corp.com" required>
+          <label class="form-label">管理员名称</label>
+          <input type="text" class="form-input" id="loginName" placeholder="输入管理员名称" required>
         </div>
         
         <div class="form-group">
-          <label class="form-label">组织架构（可选）</label>
-          <input type="text" class="form-input" id="loginOrg" placeholder="如: IEG/技术工程部">
+          <label class="form-label">管理密码</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="输入管理密码" required>
         </div>
         
         <button type="submit" class="btn btn-primary" id="loginBtn">
@@ -822,7 +822,7 @@
       </form>
       
       <div class="login-hint">
-        💡 提示：如无法登录，请联系超级管理员添加您的账号到白名单
+        💡 默认密码：admin123，登录后请及时修改
       </div>
     </div>
   </div>
@@ -1068,12 +1068,8 @@
             <input type="text" class="form-input" id="adminName" required>
           </div>
           <div class="form-group">
-            <label class="form-label">企业邮箱 *</label>
-            <input type="email" class="form-input" id="adminEmail" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">组织架构</label>
-            <input type="text" class="form-input" id="adminOrg" placeholder="如: IEG/技术工程部">
+            <label class="form-label">登录密码 *</label>
+            <input type="text" class="form-input" id="adminEmail" placeholder="设置登录密码" required>
           </div>
           <div class="form-group">
             <label class="form-label">角色</label>
@@ -1095,134 +1091,157 @@
   <div class="toast" id="toast"></div>
   
   <script>
-    const API = '/api';
-    let token = localStorage.getItem('adminToken');
+    // ========== LocalStorage-based Admin Backend ==========
+    const STORAGE_KEY = 'aiMapAdmin';
+    const DEFAULT_PASSWORD = 'admin123';
+
     let currentUser = null;
-    let allData = { sections: [], experiences: [], stars: [] };
+    let allData = { sections: [], experiences: [], stars: [], admins: [] };
     let editingTool = null;
-    
-    // Check login status
-    async function checkLogin() {
-      if (!token) {
-        showLoginScreen();
-        return;
-      }
-      
+
+    // Storage helpers
+    function getData() {
       try {
-        const res = await fetch(`${API}/admin/me`, {
-          headers: { 'x-session-token': token }
-        });
-        const data = await res.json();
-        
-        if (data.loggedIn) {
-          currentUser = data.admin;
-          showDashboard();
-        } else {
-          token = null;
-          localStorage.removeItem('adminToken');
-          showLoginScreen();
-        }
-      } catch (e) {
-        showLoginScreen();
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return null;
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+    }
+
+    function initData() {
+      const stored = getData();
+      if (stored) {
+        allData = stored;
+      } else {
+        // Seed with sections from the live ai_map.html
+        allData = {
+          sections: [
+            { id: 'coding', name: '编程开发', nameEn: 'CODING & BUILD', color: 'blue', icon: '💻', tools: [
+              { id: 'codebuddy', name: 'CodeBuddy', description: '一站式 AI 编码助手，含 IDE、插件、CLI 多种形态', url: 'https://codebuddy.cn', tags: ['编码','IDE','CLI'], resources: [], cases: [] },
+              { id: 'workbuddy', name: 'WorkBuddy', description: '非开发者的 AI 工作站，不写代码也能用 AI 干活', url: 'https://workbuddy.woa.com', tags: ['效率','办公'], resources: [], cases: [] },
+              { id: 'with', name: 'With', description: '对话即开发，需求即代码', url: 'https://with.woa.com', tags: ['对话开发'], resources: [], cases: [] },
+              { id: 'knot', name: 'Knot', description: 'AI 应用开发平台', url: 'https://knot.woa.com', tags: ['应用开发'], resources: [], cases: [] }
+            ]},
+            { id: 'design', name: '设计创意', nameEn: 'DESIGN & CREATE', color: 'purple', icon: '🎨', tools: [
+              { id: 'ardot', name: 'Ardot', description: '智能设计工具，让灵感鲜活落地', url: 'https://ardot.woa.com', tags: ['设计'], resources: [], cases: [] },
+              { id: 'sanquan', name: '三谦', description: '让设计师专注于创造', url: 'https://sanquan.woa.com', tags: ['设计'], resources: [], cases: [] },
+              { id: 'xdream', name: 'XDream', description: '多模态内容创作平台，文生图/图生视频/文生3D', url: 'https://xdream.woa.com', tags: ['多模态','创作'], resources: [], cases: [] }
+            ]},
+            { id: 'office', name: '办公效率', nameEn: 'OFFICE & EFFICIENCY', color: 'green', icon: '📊', tools: [
+              { id: 'miora', name: 'Miora', description: '通用 AI 创作助手，文案/PPT/脚本/数据分析', url: 'https://miora.woa.com', tags: ['办公','创作'], resources: [], cases: [] },
+              { id: 'hunyuan', name: '混元大模型', description: '腾讯全链路自研大模型，API/SDK 接入，支持私有化部署', url: 'https://hunyuan.qq.com', tags: ['大模型','API'], resources: [], cases: [] },
+              { id: 'yuanbao', name: '元宝', description: '随身智能助手，文档解析1000万字，MAU 1300万+', url: 'https://yuanbao.qq.com', tags: ['助手','文档'], resources: [], cases: [] }
+            ]},
+            { id: 'game', name: '游戏制作', nameEn: 'GAME & ENTERTAINMENT', color: 'orange', icon: '🎮', tools: [
+              { id: 'visvise', name: 'VISVISE', description: '全链路AI创作解决方案，动画/3D模型/智能NPC/数字人', url: 'https://visvise.woa.com', tags: ['游戏','3D'], resources: [], cases: [] },
+              { id: 'giinex', name: 'GiiNEX', description: '游戏AI引擎，生成式AI+决策AI，全生命周期解决方案', url: 'https://giinex.woa.com', tags: ['游戏','AI引擎'], resources: [], cases: [] },
+              { id: 'hunyuan_game', name: '混元游戏', description: '工业级AIGC游戏内容生产引擎，降本50-70%', url: 'https://hunyuan.qq.com/game', tags: ['游戏','AIGC'], resources: [], cases: [] },
+              { id: '3dcity', name: '3D城市自动生成', description: 'AI自动生成游戏内3D城市环境，支持UGC关卡设计', url: 'https://3dcity.woa.com', tags: ['游戏','3D'], resources: [], cases: [] }
+            ]},
+            { id: 'learn', name: '学习成长', nameEn: 'LEARN & GROW', color: 'red', icon: '📚', tools: [
+              { id: 'xiaoq', name: '小Q同学', description: '腾讯学堂AI助手，积分兑礼，课程推荐', url: 'https://xiaoq.woa.com', tags: ['学习','助手'], resources: [], cases: [] },
+              { id: 'km', name: 'KM', description: '内部经验分享平台，含AI效率星期四专题', url: 'https://km.woa.com', tags: ['知识','分享'], resources: [], cases: [] },
+              { id: 'openclaw', name: 'OpenClaw 内网版', description: '私人 AI 助理，内网知识库接入，数据不出内网', url: 'https://openclaw.woa.com', tags: ['AI助理','内网'], resources: [], cases: [] },
+              { id: 'iwiki', name: 'iWiki + AI', description: '团队知识协作平台，AI 写作助手，知识图谱构建', url: 'https://iwiki.woa.com', tags: ['知识','协作'], resources: [], cases: [] }
+            ]}
+          ],
+          experiences: [],
+          stars: [],
+          admins: [
+            { id: 'admin1', name: 'Admin', password: DEFAULT_PASSWORD, role: 'super_admin' }
+          ]
+        };
+        saveData();
       }
     }
-    
+
+    // Check login status
+    function checkLogin() {
+      const session = sessionStorage.getItem('aiMapSession');
+      if (session) {
+        try {
+          currentUser = JSON.parse(session);
+          showDashboard();
+          return;
+        } catch(e) {}
+      }
+      showLoginScreen();
+    }
+
     function showLoginScreen() {
       document.getElementById('loginScreen').style.display = 'flex';
       document.getElementById('dashboard').classList.remove('active');
     }
-    
+
     function showDashboard() {
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').classList.add('active');
-      
-      // Update user info
-      document.getElementById('userName').textContent = currentUser.name || currentUser.email.split('@')[0];
+
+      document.getElementById('userName').textContent = currentUser.name;
       document.getElementById('userRole').textContent = currentUser.role === 'super_admin' ? '超级管理员' : '管理员';
-      document.getElementById('userAvatar').textContent = (currentUser.name || currentUser.email)[0].toUpperCase();
-      
-      // Auto-fill author field with current admin name
-      document.getElementById('expAuthor').value = currentUser.name || currentUser.email.split('@')[0];
-      
-      // Show admin tab for super_admin
+      document.getElementById('userAvatar').textContent = currentUser.name[0].toUpperCase();
+      document.getElementById('expAuthor').value = currentUser.name;
+
       if (currentUser.role === 'super_admin') {
         document.getElementById('tabAdmins').style.display = 'block';
-        loadAdminList();
       }
-      
+
       loadData();
     }
-    
+
     // Login
-    document.getElementById('loginForm').onsubmit = async (e) => {
+    document.getElementById('loginForm').onsubmit = (e) => {
       e.preventDefault();
       const btn = document.getElementById('loginBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span>登录中...</span>';
-      
-      const email = document.getElementById('loginEmail').value;
-      const org = document.getElementById('loginOrg').value;
+
+      const name = document.getElementById('loginName').value.trim();
+      const password = document.getElementById('loginPassword').value;
       const errorEl = document.getElementById('loginError');
       errorEl.classList.remove('show');
-      
-      try {
-        const res = await fetch(`${API}/admin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, org })
-        });
-        
-        const data = await res.json();
-        
-        if (data.success) {
-          token = data.token;
-          currentUser = data.admin;
-          localStorage.setItem('adminToken', token);
-          showDashboard();
-        } else {
-          errorEl.textContent = data.error || '登录失败';
-          errorEl.classList.add('show');
-          btn.disabled = false;
-          btn.innerHTML = '<span>登录</span>';
-        }
-      } catch (e) {
-        errorEl.textContent = '网络错误，请重试';
+
+      initData();
+
+      const admin = allData.admins.find(a => a.name === name && a.password === password);
+      if (admin) {
+        currentUser = { id: admin.id, name: admin.name, role: admin.role };
+        sessionStorage.setItem('aiMapSession', JSON.stringify(currentUser));
+        showDashboard();
+      } else {
+        errorEl.textContent = '名称或密码错误';
         errorEl.classList.add('show');
         btn.disabled = false;
-        btn.innerHTML = '<span>登录</span>';
       }
     };
-    
+
     // Logout
-    async function logout() {
-      if (token) {
-        await fetch(`${API}/admin/logout`, {
-          method: 'POST',
-          headers: { 'x-session-token': token }
-        });
-      }
-      token = null;
+    function logout() {
       currentUser = null;
-      localStorage.removeItem('adminToken');
+      sessionStorage.removeItem('aiMapSession');
       showLoginScreen();
     }
-    
+
     // Load data
-    async function loadData() {
-      const res = await fetch(`${API}/data`);
-      allData = await res.json();
+    function loadData() {
+      const stored = getData();
+      if (stored) allData = stored;
       renderSections();
       renderExperiences();
+      renderStars();
     }
-    
+
     // Render sections
     function renderSections() {
       const list = document.getElementById('sectionsList');
-      if (allData.sections.length === 0) {
+      if (!allData.sections || allData.sections.length === 0) {
         list.innerHTML = '<div class="empty-state">暂无板块，点击上方添加</div>';
         return;
       }
-      
+
       list.innerHTML = allData.sections.map(section => `
         <div class="section-item expanded">
           <div class="section-item-header collapse-header" onclick="toggleCollapse(this.parentElement)">
@@ -1260,22 +1279,21 @@
         </div>
       `).join('');
     }
-    
-    // Toggle collapse
+
     function toggleCollapse(item) {
       const header = item.querySelector('.collapse-header');
       header.classList.toggle('collapsed');
       item.classList.toggle('expanded');
     }
-    
+
     // Render experiences
     function renderExperiences() {
       const list = document.getElementById('expList');
-      if (allData.experiences.length === 0) {
+      if (!allData.experiences || allData.experiences.length === 0) {
         list.innerHTML = '<div class="empty-state">暂无经验分享</div>';
         return;
       }
-      
+
       list.innerHTML = allData.experiences.map(exp => `
         <div class="exp-item">
           <div class="exp-header">
@@ -1289,38 +1307,58 @@
         </div>
       `).join('');
     }
-    
+
+    // Render stars
+    function renderStars() {
+      const list = document.getElementById('starList');
+      if (!allData.stars || allData.stars.length === 0) {
+        list.innerHTML = '<div class="empty-state">暂无AI达人</div>';
+        return;
+      }
+
+      list.innerHTML = allData.stars.map(star => `
+        <div class="exp-item">
+          <div class="exp-header">
+            <div class="exp-title">${star.name} ${star.title ? '- ' + star.title : ''}</div>
+            <div class="exp-meta">${(star.badges || []).join(', ')}</div>
+          </div>
+          <div class="exp-content">${star.description || ''}</div>
+          <div style="margin-top: 12px;">
+            <button class="btn btn-danger btn-sm" onclick="deleteStar('${star.id}')">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
     // Load admin list
-    async function loadAdminList() {
-      try {
-        const res = await fetch(`${API}/admin/list`, {
-          headers: { 'x-session-token': token }
-        });
-        const admins = await res.json();
-        
-        const list = document.getElementById('adminList');
-        list.innerHTML = admins.map(admin => `
-          <div class="admin-item">
-            <div class="admin-info">
-              <div class="admin-avatar">${(admin.name || admin.email || 'A')[0].toUpperCase()}</div>
-              <div class="admin-details">
-                <div class="admin-name">${admin.name || admin.email}</div>
-                <div class="admin-meta">${admin.email} · ${admin.org || '未设置组织'}</div>
-              </div>
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <span class="role-badge ${admin.role}">${admin.role === 'super_admin' ? '超级管理员' : '管理员'}</span>
-              ${admin.id !== currentUser.id ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${admin.id}')">删除</button>` : '<span style="font-size: 12px; color: var(--text-muted);">当前用户</span>'}
+    function loadAdminList() {
+      const list = document.getElementById('adminList');
+      if (!allData.admins || allData.admins.length === 0) {
+        list.innerHTML = '<div class="empty-state">暂无管理员</div>';
+        return;
+      }
+
+      list.innerHTML = allData.admins.map(admin => `
+        <div class="admin-item">
+          <div class="admin-info">
+            <div class="admin-avatar">${(admin.name || 'A')[0].toUpperCase()}</div>
+            <div class="admin-details">
+              <div class="admin-name">${admin.name}</div>
+              <div class="admin-meta">${admin.role === 'super_admin' ? '超级管理员' : '管理员'}</div>
             </div>
           </div>
-        `).join('');
-      } catch (e) {
-        console.error('Failed to load admin list');
-      }
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="role-badge ${admin.role}">${admin.role === 'super_admin' ? '超级管理员' : '管理员'}</span>
+            ${admin.id !== currentUser.id ? `<button class="btn btn-danger btn-sm" onclick="deleteAdmin('${admin.id}')">删除</button>` : '<span style="font-size: 12px; color: var(--text-muted);">当前用户</span>'}
+          </div>
+        </div>
+      `).join('');
     }
-    
+
+    // ========== CRUD Operations (localStorage) ==========
+
     // Add section
-    document.getElementById('addSectionForm').onsubmit = async (e) => {
+    document.getElementById('addSectionForm').onsubmit = (e) => {
       e.preventDefault();
       const form = e.target;
       const newSection = {
@@ -1331,43 +1369,28 @@
         icon: form.icon.value || '📦',
         tools: []
       };
-      
-      const res = await fetch(`${API}/sections`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-session-token': token
-        },
-        body: JSON.stringify(newSection)
-      });
-      
-      if (res.ok) {
-        showToast('板块添加成功');
-        loadData();
-        form.reset();
-      } else {
-        const data = await res.json();
-        showToast(data.error || '添加失败', 'error');
+
+      if (allData.sections.find(s => s.id === newSection.id)) {
+        showToast('板块ID已存在', 'error');
+        return;
       }
+
+      allData.sections.push(newSection);
+      saveData();
+      showToast('板块添加成功');
+      renderSections();
+      form.reset();
     };
-    
+
     // Delete section
-    async function deleteSection(sectionId) {
+    function deleteSection(sectionId) {
       if (!confirm('确定要删除整个板块吗？')) return;
-      
-      const res = await fetch(`${API}/sections/${sectionId}`, { 
-        method: 'DELETE',
-        headers: { 'x-session-token': token }
-      });
-      if (res.ok) {
-        showToast('删除成功');
-        loadData();
-      } else {
-        const data = await res.json();
-        showToast(data.error || '删除失败', 'error');
-      }
+      allData.sections = allData.sections.filter(s => s.id !== sectionId);
+      saveData();
+      showToast('删除成功');
+      renderSections();
     }
-    
+
     // Tool Modal
     function openAddToolModal(sectionId) {
       editingTool = null;
@@ -1377,12 +1400,12 @@
       document.getElementById('toolSectionId').value = sectionId;
       document.getElementById('toolModal').classList.add('active');
     }
-    
+
     function editTool(sectionId, toolId) {
       const section = allData.sections.find(s => s.id === sectionId);
       const tool = section?.tools?.find(t => t.id === toolId);
       if (!tool) return;
-      
+
       editingTool = { sectionId, toolId };
       document.getElementById('toolModalTitle').textContent = '编辑工具';
       document.getElementById('toolId').value = tool.id;
@@ -1395,17 +1418,17 @@
       document.getElementById('toolCases').value = (tool.cases || []).join(', ');
       document.getElementById('toolModal').classList.add('active');
     }
-    
+
     function closeToolModal() {
       document.getElementById('toolModal').classList.remove('active');
     }
-    
-    document.getElementById('toolForm').onsubmit = async (e) => {
+
+    document.getElementById('toolForm').onsubmit = (e) => {
       e.preventDefault();
-      
+
       const sectionId = document.getElementById('toolSectionId').value;
       const toolId = document.getElementById('toolId').value || 'tool' + Date.now();
-      
+
       const tool = {
         id: toolId,
         name: document.getElementById('toolName').value,
@@ -1415,64 +1438,53 @@
         resources: document.getElementById('toolResources').value.split(',').map(t => t.trim()).filter(Boolean),
         cases: document.getElementById('toolCases').value.split(',').map(t => t.trim()).filter(Boolean)
       };
-      
-      const url = editingTool 
-        ? `${API}/sections/${sectionId}/tools/${editingTool.toolId}`
-        : `${API}/sections/${sectionId}/tools`;
-      
-      const res = await fetch(url, {
-        method: editingTool ? 'PUT' : 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-session-token': token
-        },
-        body: JSON.stringify(tool)
-      });
-      
-      if (res.ok) {
-        showToast(editingTool ? '更新成功' : '添加成功');
-        closeToolModal();
-        loadData();
+
+      const section = allData.sections.find(s => s.id === sectionId);
+      if (!section) { showToast('板块不存在', 'error'); return; }
+
+      if (editingTool) {
+        const idx = section.tools.findIndex(t => t.id === editingTool.toolId);
+        if (idx >= 0) section.tools[idx] = tool;
       } else {
-        const data = await res.json();
-        showToast(data.error || '操作失败', 'error');
+        section.tools.push(tool);
       }
+
+      saveData();
+      showToast(editingTool ? '更新成功' : '添加成功');
+      closeToolModal();
+      renderSections();
     };
-    
+
     // Delete tool
-    async function deleteTool(sectionId, toolId) {
+    function deleteTool(sectionId, toolId) {
       if (!confirm('确定要删除这个工具吗？')) return;
-      
-      const res = await fetch(`${API}/sections/${sectionId}/tools/${toolId}`, { 
-        method: 'DELETE',
-        headers: { 'x-session-token': token }
-      });
-      if (res.ok) {
+      const section = allData.sections.find(s => s.id === sectionId);
+      if (section) {
+        section.tools = section.tools.filter(t => t.id !== toolId);
+        saveData();
         showToast('删除成功');
-        loadData();
-      } else {
-        const data = await res.json();
-        showToast(data.error || '删除失败', 'error');
+        renderSections();
       }
     }
-    
+
     // Delete experience
-    async function deleteExperience(expId) {
+    function deleteExperience(expId) {
       if (!confirm('确定要删除这条经验分享吗？')) return;
-      
-      const res = await fetch(`${API}/experiences/${expId}`, { 
-        method: 'DELETE',
-        headers: { 'x-session-token': token }
-      });
-      if (res.ok) {
-        showToast('删除成功');
-        loadData();
-      } else {
-        const data = await res.json();
-        showToast(data.error || '删除失败', 'error');
-      }
+      allData.experiences = allData.experiences.filter(e => e.id !== expId);
+      saveData();
+      showToast('删除成功');
+      renderExperiences();
     }
-    
+
+    // Delete star
+    function deleteStar(starId) {
+      if (!confirm('确定要删除这个AI达人吗？')) return;
+      allData.stars = allData.stars.filter(s => s.id !== starId);
+      saveData();
+      showToast('删除成功');
+      renderStars();
+    }
+
     // Admin Modal
     function openAddAdminModal() {
       document.getElementById('adminForm').reset();
@@ -1480,102 +1492,89 @@
       document.getElementById('adminModalTitle').textContent = '添加管理员';
       document.getElementById('adminModal').classList.add('active');
     }
-    
+
     function closeAdminModal() {
       document.getElementById('adminModal').classList.remove('active');
     }
-    
-    document.getElementById('adminForm').onsubmit = async (e) => {
+
+    document.getElementById('adminForm').onsubmit = (e) => {
       e.preventDefault();
-      
+
       const admin = {
+        id: 'admin' + Date.now(),
         name: document.getElementById('adminName').value,
-        email: document.getElementById('adminEmail').value,
-        org: document.getElementById('adminOrg').value,
+        password: document.getElementById('adminEmail').value + '123', // Use email field as temp password source
         role: document.getElementById('adminRole').value
       };
-      
-      const res = await fetch(`${API}/admin`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-session-token': token
-        },
-        body: JSON.stringify(admin)
-      });
-      
-      if (res.ok) {
-        showToast('管理员添加成功');
-        closeAdminModal();
-        loadAdminList();
-      } else {
-        const data = await res.json();
-        showToast(data.error || '添加失败', 'error');
-      }
+
+      allData.admins.push(admin);
+      saveData();
+      showToast('管理员添加成功');
+      closeAdminModal();
+      loadAdminList();
     };
-    
+
     // Add Experience Form
-    document.getElementById('addExperienceForm').onsubmit = async (e) => {
+    document.getElementById('addExperienceForm').onsubmit = (e) => {
       e.preventDefault();
-      
+
       const experience = {
+        id: 'exp' + Date.now(),
         title: document.getElementById('expTitle').value,
         author: document.getElementById('expAuthor').value,
         content: document.getElementById('expContent').value,
         date: new Date().toISOString().split('T')[0]
       };
-      
-      const res = await fetch(`${API}/experiences`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-session-token': token
-        },
-        body: JSON.stringify(experience)
-      });
-      
-      if (res.ok) {
-        showToast('经验分享发布成功');
-        document.getElementById('addExperienceForm').reset();
-        document.getElementById('expAuthor').value = currentUser.name || currentUser.email.split('@')[0];
-        loadData();
-      } else {
-        const data = await res.json();
-        showToast(data.error || '发布失败', 'error');
-      }
+
+      allData.experiences.push(experience);
+      saveData();
+      showToast('经验分享发布成功');
+      document.getElementById('addExperienceForm').reset();
+      document.getElementById('expAuthor').value = currentUser.name;
+      renderExperiences();
     };
-    
-    async function deleteAdmin(adminId) {
+
+    // Add Star Form
+    document.getElementById('addStarForm').onsubmit = (e) => {
+      e.preventDefault();
+
+      const star = {
+        id: 'star' + Date.now(),
+        name: document.getElementById('starName').value,
+        title: document.getElementById('starTitle').value,
+        avatarUrl: document.getElementById('starAvatarUrl').value,
+        description: document.getElementById('starDescription').value,
+        badges: document.getElementById('starBadges').value.split(',').map(t => t.trim()).filter(Boolean)
+      };
+
+      allData.stars.push(star);
+      saveData();
+      showToast('AI达人添加成功');
+      document.getElementById('addStarForm').reset();
+      renderStars();
+    };
+
+    function deleteAdmin(adminId) {
       if (!confirm('确定要删除这个管理员吗？')) return;
-      
-      const res = await fetch(`${API}/admin/${adminId}`, { 
-        method: 'DELETE',
-        headers: { 'x-session-token': token }
-      });
-      if (res.ok) {
-        showToast('删除成功');
-        loadAdminList();
-      } else {
-        const data = await res.json();
-        showToast(data.error || '删除失败', 'error');
-      }
+      allData.admins = allData.admins.filter(a => a.id !== adminId);
+      saveData();
+      showToast('删除成功');
+      loadAdminList();
     }
-    
+
     // Tab switch
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        
+
         document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
         document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
-        
-        if (tab.dataset.tab === 'admins') {
-          loadAdminList();
-        }
+
+        if (tab.dataset.tab === 'admins') loadAdminList();
       });
     });
-    
+
     // Toast
     function showToast(msg, type = 'success') {
       const toast = document.getElementById('toast');
@@ -1583,8 +1582,9 @@
       toast.className = `toast show ${type}`;
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
-    
+
     // Init
+    initData();
     checkLogin();
   </script>
 </body>
