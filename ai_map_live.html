@@ -126,8 +126,22 @@
 
     let currentSection = null;
 
-    // 加载数据（静态 - 无需后端）
+    // 加载数据 - 优先从 localStorage 读取管理后台修改的数据
     function loadData() {
+      // 尝试从 localStorage 读取管理后台数据
+      try {
+        const stored = localStorage.getItem('aiMapAdmin');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.sections && parsed.sections.length > 0) {
+            // 用 localStorage 数据覆盖硬编码数据
+            appData.sections = parsed.sections;
+            if (parsed.experiences) appData.experiences = parsed.experiences;
+            if (parsed.stars) appData.stars = parsed.stars;
+          }
+        }
+      } catch(e) {}
+
       render();
       
       // 更新最后更新时间

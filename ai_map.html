@@ -408,6 +408,105 @@
       event.target.classList.add('active');
     }
 
+    // 从 localStorage 读取管理后台数据并动态更新卡片
+    (function() {
+      try {
+        const raw = localStorage.getItem('aiMapAdmin');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (!data.sections || data.sections.length === 0) return;
+
+        // 更新导航栏
+        const navBar = document.getElementById('navBar');
+        const colorMap = {
+          blue: { bg: '#EBF8FF', text: '#2B6CB0' },
+          purple: { bg: '#FAF5FF', text: '#6B46C1' },
+          orange: { bg: '#FFFAF0', color: '#C05621' },
+          green: { bg: '#F0FFF4', text: '#276749' },
+          red: { bg: '#FFF5F5', text: '#C53030' },
+          gray: { bg: '#F7FAFC', text: '#4A5568' }
+        };
+        const navColors = { blue: '#EBF8FF', purple: '#FAF5FF', orange: '#FFFAF0', green: '#F0FFF4', red: '#FFF5F5', gray: '#F7FAFC' };
+        const navTextColors = { blue: '#2B6CB0', purple: '#6B46C1', orange: '#C05621', green: '#276749', red: '#C53030', gray: '#4A5568' };
+
+        navBar.innerHTML = data.sections.map(s => {
+          const bg = navColors[s.color] || navColors.blue;
+          const text = navTextColors[s.color] || navTextColors.blue;
+          return `<button class="nav-btn" style="background: ${bg}; color: ${text};" onclick="scrollToSection('${s.id}')">${s.icon || ''} ${s.name}</button>`;
+        }).join('');
+
+        // 更新分类标签
+        const badges = document.querySelector('.hero-section .flex.flex-wrap');
+        if (badges) {
+          badges.innerHTML = data.sections.map(s => {
+            return `<span class="category-badge" style="background: rgba(255,255,255,0.15); color: #EBF8FF;">${s.icon || ''} ${s.name}</span>`;
+          }).join('');
+        }
+
+        // 更新内容区域
+        const mainContent = document.querySelector('.max-w-7xl');
+        const heroAndNav = mainContent.querySelectorAll(':scope > .hero-section, :scope > .nav-scroll');
+        
+        // 保存 hero 和 nav
+        const hero = mainContent.querySelector('.hero-section');
+        const nav = mainContent.querySelector('.nav-scroll');
+
+        // 清除所有 section
+        mainContent.querySelectorAll('section').forEach(s => s.remove());
+
+        const sectionColors = {
+          blue: 'section-coding', purple: 'section-design', orange: 'section-office',
+          green: 'section-game', red: 'section-learn', gray: 'section-learn'
+        };
+
+        data.sections.forEach((section, index) => {
+          const sectionClass = sectionColors[section.color] || 'section-coding';
+          const chapterNum = String(index + 2).padStart(2, '0');
+          
+          const sectionEl = document.createElement('section');
+          sectionEl.id = section.id;
+          sectionEl.className = 'mb-16 fade-in';
+          sectionEl.innerHTML = `
+            <div class="section-header ${sectionClass} mb-6">
+              <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Chapter ${chapterNum}</p>
+              <h2 class="text-2xl font-bold text-gray-800">${section.name} <span class="text-gray-400 font-normal text-base ml-2">${section.nameEn || ''}</span></h2>
+            </div>
+            <div class="grid-container">
+              ${(section.tools || []).map(tool => `
+                <div class="card p-6">
+                  <h3 class="text-lg font-bold text-gray-800 mb-2">${tool.name}</h3>
+                  <p class="text-sm text-gray-500 mb-3">${tool.description || ''}</p>
+                  ${tool.url ? `<a href="${tool.url}" target="_blank" class="link mb-4">🔗 ${tool.url.replace(/^https?:\/\//, '')}</a>` : ''}
+                  ${(tool.tags && tool.tags.length > 0) ? `
+                    <div class="flex flex-wrap gap-2 mt-3">
+                      ${tool.tags.map(t => `<span class="tag tag-blue">${t}</span>`).join('')}
+                    </div>` : ''}
+                  ${(tool.resources && tool.resources.length > 0) ? `
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                      <p class="text-xs text-gray-400 mb-2">🎬 官方直播 / 文章</p>
+                      <div class="flex flex-wrap gap-2">
+                        ${tool.resources.map(r => `<span class="tag tag-green">${r}</span>`).join('')}
+                      </div>
+                    </div>` : ''}
+                  ${(tool.cases && tool.cases.length > 0) ? `
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                      <p class="text-xs text-gray-400 mb-2">📝 用户案例</p>
+                      <div class="flex flex-wrap gap-2">
+                        ${tool.cases.map(c => `<span class="tag tag-orange">${c}</span>`).join('')}
+                      </div>
+                    </div>` : ''}
+                </div>
+              `).join('') || '<div class="card p-8 text-center text-gray-400">暂无工具</div>'}
+            </div>
+          `;
+          mainContent.appendChild(sectionEl);
+        });
+
+      } catch(e) {
+        console.warn('Failed to load admin data from localStorage:', e);
+      }
+    })();
+
     // 滚动时更新导航状态
     window.addEventListener('scroll', () => {
       const sections = ['coding', 'design', 'office', 'game', 'learn'];
